@@ -1,6 +1,6 @@
 import json
 from scipy import interpolate
-locdata=json.load(open('/Users/s1259407/Dropbox/PhD/phd_peter_swain/R/stepsdata.json'))  
+locdata=json.load(open('stepsdata.json'))  
 
 t=np.around(np.linspace(0,20,250),3);
 allvars=['cy5', 'times', 'centeredtimes', 'type']
