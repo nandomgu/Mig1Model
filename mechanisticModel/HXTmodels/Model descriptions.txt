@@ -1,0 +1,5 @@
+Description of all the HXT models:
+model1. simple threshold-activated production of 
+model2. model 1 adding the GFP maturation reaction 
+model3. model 2 plus threshold-induced degradation of mRNA
+model4. model 3 plus threshold-induced degradation of protein

@@ -1,0 +1,595 @@
+%%% Free models of Std1, juxtaposed. copy and paste individual chunks into a file. 20170131
+
+function modelh= Std1Test1(params, mediaInput)
+%%this model is of the negative self regulation of protein Std1 
+%%and its glucose degraation,%%obviating transcription.
+
+
+modelh= @transcriptModelh;
+
+function dout=transcriptModelh(t, x)
+
+mediaInput=smooth(mediaInput);
+Glucose=interp1(0:(numel(mediaInput)-1), mediaInput,t);
+
+Std1=x(1);
+
+VStd1=params(1);
+KSelfStd1=params(2);
+KDegStd1=params(3);
+threshStd1=params(4);
+
+DStd1= (VStd1/ (1+(Std1/KSelfStd1)))- (KDegStd1*Glucose/ (threshStd1+Glucose)*Std1); 
+
+dout= [];
+
+dout(1)=DStd1;
+
+end
+end
+
+%%%%%%%
+function modelh= Std1Test(params, mediaInput)
+%%this model is of the negative self regulation of protein Std1 
+%%%%% Std1 protein self repressed, glucose-induced degradation and basal degradation too.
+
+
+modelh= @transcriptModelh;
+
+function dout=transcriptModelh(t, x)
+
+mediaInput=smooth(mediaInput);
+Glucose=interp1(0:(numel(mediaInput)-1), mediaInput,t);
+
+
+Std1=x(1);
+
+
+
+VStd1=params(1);
+KSelfStd1=params(2);
+KDegStd1=params(3);
+threshStd1=params(4);
+basalDegStd1=params(5);
+
+DStd1= VStd1/(1+(Std1/KSelfStd1))- basalDegStd1*Std1 -(KDegStd1*Glucose/ (threshStd1+Glucose)*Std1); 
+
+
+
+dout= []
+
+dout(1)=DStd1;
+
+end
+end
+
+
+
+
+
+
+%%%%%%%
+%%
+
+function modelh= Std1Test(params, mediaInput)
+%%this model is of the negative self regulation of protein Std1 
+%%%%% Std1 protein self repressed, glucose-induced degradation and basal degradation too.
+%%this model also includes mth1 as a basic protein that gets degraded with glucose.
+
+
+modelh= @transcriptModelh;
+
+function dout=transcriptModelh(t, x)
+
+mediaInput=smooth(mediaInput);
+Glucose=interp1(0:(numel(mediaInput)-1), mediaInput,t);
+
+
+Std1=x(1);
+Mth1=x(2);
+
+
+VStd1=params(1);
+KSelfStd1=params(2);
+KDegStd1=params(3);
+threshStd1=params(4);
+basalDegStd1=params(5);
+VMth1= params(6);
+basalDegMth1=params(7);
+KDegMth1=params(8);
+threshMth1=params(9);
+KRepMth1= params(10);
+
+
+
+DStd1= VStd1/(1+(Std1/KSelfStd1)+(Mth1/KRepMth1))- basalDegStd1*Std1 -(KDegStd1*Glucose/ (threshStd1+Glucose)*Std1); 
+DMth1=  VMth1- basalDegMth1*Mth1- ((KDegMth1*Glucose)/(threshMth1+Glucose))*Mth1;
+
+
+dout= zeros(2,1);
+dout(1)=DStd1;
+dout(2)=DMth1;
+
+end
+end
+
+
+%%% 
+
+
+%%%%%%%
+%%
+
+function modelh= Std1Test(params, mediaInput)
+%%this model is of the negative self regulation of protein Std1 
+%%%%% Std1 protein self repressed, glucose-induced degradation and basal degradation too.
+%%this model also includes mth1 as a basic protein that gets degraded with glucose.
+%%this model includes active mig1 as going in and out of the nucleus, 
+%%but Std1 raises the threshold of activation of Std1.
+%%at first glance, this model adds some extra parameters to account directly
+%%for the Std1 effect on mig1.
+
+modelh= @transcriptModelh;
+
+function dout=transcriptModelh(t, x)
+
+mediaInput=smooth(mediaInput);
+Glucose=interp1(0:(numel(mediaInput)-1), mediaInput,t);
+
+
+Std1=x(1);
+Mth1=x(2);
+activeMig1=x(3);
+
+
+VStd1=params(1);
+KSelfStd1=params(2);
+KDegStd1=params(3);
+threshStd1=params(4);
+basalDegStd1=params(5);
+VMth1= params(6);
+basalDegMth1=params(7);
+KDegMth1=params(8);
+threshMth1=params(9);
+KRepMth1=params(10);
+thresholdStd1Mig1=params(11); %%threshold concentration of Std1 at which its mig1 effect is noticeable.
+hillStd1Mig1=2; %%hill factor for the std1-mig1 effect
+%%equation that describes how the mig1 activtion threshold gets affected by std1
+KactiveMig1= @(Std1,thresholdStd1Mig1, hillStd1Mig1)  Std1^hillStd1/(thresholdStd1Mig1^hillStd1+Std1^hillStd1Mig1);
+hillactiveMig1=params(12);
+
+
+DStd1= VStd1/(1+(Std1/KSelfStd1)+(Mth1/KRepMth1))- basalDegStd1*Std1 -(KDegStd1*Glucose/ (threshStd1+Glucose)*Std1); 
+DMth1=  VMth1- basalDegMth1*Mth1- ((KDegMth1*Glucose)/(threshMth1+Glucose))*Mth1;
+
+%active state of mig1 is determined by glucose and std1
+activeMig1= (Glucose^hillactiveMig1)/(KactiveMig1(Std1)^hillactiveMig1+ Glucose^hillactiveMig1)
+
+dout= zeros(2,1);
+dout(1)=DStd1;
+dout(2)=DMth1;
+dout(3)=activeMig1;
+
+end
+end
+
+
+%%% 
+
+
+function modelh= Std1Test(params, mediaInput)
+%%this model is of the negative self regulation of protein Std1 
+%%%%% Std1 protein self repressed, glucose-induced degradation and basal degradation too.
+%%this model also includes mth1 as a basic protein that gets degraded with glucose.
+%%this model includes 2 0-1 equations, one of them snf1 and another one for active mig1.
+%%snf1 deactivates mig1. the trick is though, that snf1 deactivation of mig1 is enhanced by std1.
+%%the way we achieve this is  by having the multiplication of snf1 and Std1 deactivate mig1.
+%%the problem with this model is that concentrations of 0 for Std1 release repression of Mig1.
+modelh= @transcriptModelh;
+
+function dout=transcriptModelh(t, x)
+
+mediaInput=smooth(mediaInput);
+Glucose=interp1(0:(numel(mediaInput)-1), mediaInput,t);
+
+
+Std1=x(1);
+Mth1=x(2);
+Snf1=x(3);
+activeMig1=x(4);
+
+
+VStd1=params(1);
+KSelfStd1=params(2);
+KDegStd1=params(3);
+threshStd1=params(4);
+basalDegStd1=params(5);
+VMth1= params(6);
+basalDegMth1=params(7);
+KDegMth1=params(8);
+threshMth1=params(9);
+KRepMth1=params(10);
+KSnf1= params(11)
+
+
+
+DStd1= VStd1/(1+(Std1/KSelfStd1)+(Mth1/KRepMth1))- basalDegStd1*Std1 -(KDegStd1*Glucose/ (threshStd1+Glucose)*Std1); 
+DMth1=  VMth1- basalDegMth1*Mth1- ((KDegMth1*Glucose)/(threshMth1+Glucose))*Mth1;
+%active state of mig1 is determined by glucose and Snf1 and Std1
+Snf1= 1/ (1+Glucose/KSnf1); %%we could try  keeping an activation thresh. constant or to have the threshold increase with Std1
+activeMig1= 1/ (1+ Snf1*Std1/KrepMig1); %%we could alternatively try to enhance snf1 by multiplying with std1
+
+
+
+dout= zeros(2,1);
+dout(1)=DStd1;
+dout(2)=DMth1;
+dout(3)=Snf1;
+dout(4)=activeMig1;
+
+end
+end
+
+
+
+function modelh= Std1Test(params, mediaInput)
+%%this model is of the negative self regulation of protein Std1 
+%%%%% Std1 protein self repressed, glucose-induced degradation and basal degradation too.
+%%this model also includes mth1 as a basic protein that gets degraded with glucose.
+%%this model includes 2 0-1 equations, one of them snf1 and another one for active mig1.
+%%snf1 deactivates mig1.  snf1 deactivation of mig1 is enhanced by std1.
+%% This happens here through additive repression of Std1 and Snf1 over mig1
+
+modelh= @transcriptModelh;
+
+function dout=transcriptModelh(t, x)
+
+%mediaInput=smooth(mediaInput);
+Glucose=interp1(0:(numel(mediaInput)-1), mediaInput,t);
+
+
+Std1=x(1);
+Mth1=x(2);
+Snf1=x(3);
+activeMig1=x(4);
+
+
+VStd1=params(1);
+KSelfStd1=params(2);
+KDegStd1=params(3);
+threshStd1=params(4);
+basalDegStd1=params(5);
+VMth1= params(6);
+basalDegMth1=params(7);
+KDegMth1=params(8);
+threshMth1=params(9);
+KRepMth1=params(10);
+KSnf1= params(11);
+KRepSnf1Mig1=params(12);
+KEnhance=params(13);
+
+
+DStd1= VStd1/(1+(Std1/KSelfStd1)+(Mth1/KRepMth1))- basalDegStd1*Std1 -(KDegStd1*Glucose/ (threshStd1+Glucose)*Std1); 
+DMth1=  VMth1- basalDegMth1*Mth1- ((KDegMth1*Glucose)/(threshMth1+Glucose))*Mth1;
+%active state of mig1 is determined by glucose and Snf1 and Std1
+Snf1= 1/ (1+Glucose/KSnf1); %%we could try  keeping an activation thresh. constant or to have the threshold increase with Std1
+activeMig1= 1/ (1+ (Snf1/KRepSnf1Mig1)+(KEnhance*Std1)); %%we could alternatively try to enhance snf1 by multiplying with std1
+
+
+
+dout= zeros(4,1);
+dout(1)=DStd1;
+dout(2)=DMth1;
+dout(3)=Snf1;
+dout(4)=activeMig1;
+
+end
+end
+
+
+
+function modelh= Std1Test(params, mediaInput)
+%%this model is of the negative self regulation of protein Std1 
+%%%%% Std1 protein self repressed, glucose-induced degradation and basal degradation too.
+%%this model also includes mth1 as a basic protein that gets degraded with glucose.
+%%this model includes 2 0-1 equations, one of them snf1 and another one for active mig1.
+%%snf1 deactivates mig1.  snf1 deactivation of mig1 is enhanced by std1.
+%% This happens here through additive repression of Std1 and Snf1 over mig1
+%%This model also includes mig1 ultrasensitivity
+
+modelh= @transcriptModelh;
+
+function dout=transcriptModelh(t, x)
+
+%mediaInput=smooth(mediaInput);
+Glucose=interp1(0:(numel(mediaInput)-1), mediaInput,t);
+
+
+Std1=x(1);
+Mth1=x(2);
+Snf1=x(3);
+activeMig1=x(4);
+
+
+VStd1=params(1);
+KSelfStd1=params(2);
+KDegStd1=params(3);
+threshStd1=params(4);
+basalDegStd1=params(5);
+VMth1= params(6);
+basalDegMth1=params(7);
+KDegMth1=params(8);
+threshMth1=params(9);
+KRepMth1=params(10);
+KSnf1= params(11);
+KRepSnf1Mig1=params(12);
+KEnhance=params(13);
+%hillactiveMig1=params(14);
+
+
+DStd1= VStd1/(1+(Std1/KSelfStd1)+(Mth1/KRepMth1))- basalDegStd1*Std1 -(KDegStd1*Glucose/ (threshStd1+Glucose)*Std1); 
+DMth1=  VMth1- basalDegMth1*Mth1- ((KDegMth1*Glucose)/(threshMth1+Glucose))*Mth1;
+%active state of mig1 is determined by glucose and Snf1 and Std1
+Snf1= 1/ (1+Glucose/KSnf1); %%we could try  keeping an activation thresh. constant or to have the threshold increase with Std1
+activeMig1= 1/ (1+ (Snf1/KRepSnf1Mig1)+(KEnhance*Std1)); %%we could alternatively try to enhance snf1 by multiplying with std1
+
+
+
+dout= zeros(4,1);
+dout(1)=DStd1;
+dout(2)=DMth1;
+dout(3)=Snf1;
+dout(4)=activeMig1;
+
+end
+end
+
+
+function modelh= Std1Test(params, mediaInput)
+%%this model is of the negative self regulation of protein Std1 
+%%%%% Std1 protein self repressed, glucose-induced degradation and basal degradation too.
+%%this model also includes mth1 as a basic protein that gets degraded with glucose.
+%%this model includes 2 0-1 equations, one of them snf1 and another one for active mig1.
+%%
+
+modelh= @transcriptModelh;
+
+function dout=transcriptModelh(t, x)
+
+%mediaInput=smooth(mediaInput);
+Glucose=interp1(0:(numel(mediaInput)-1), mediaInput,t);
+
+
+Std1=x(1);
+Mth1=x(2);
+Snf1=x(3);
+activeMig1=x(4);
+HXT1=x(5);
+HXT2=x(6);
+HXT3=x(7);
+HXT4=x(8);
+HXT7=x(9);
+
+
+VStd1=params(1);
+KSelfStd1=params(2);
+KDegStd1=params(3);
+threshStd1=params(4);
+basalDegStd1=params(5);
+VMth1= params(6);
+basalDegMth1=params(7);
+KDegMth1=params(8);
+threshMth1=params(9);
+KRepMth1=params(10);
+KSnf1= params(11);
+KRepSnf1Mig1=params(12);
+KEnhance=params(13);
+hillactiveMig1=params(14);
+KMig1HXT4=params(15);
+KStd1HXT4=params(16);
+KMth1HXT4=params(17);
+KMig1HXT2=params(18);
+
+
+DStd1= VStd1/(1+(Std1/KSelfStd1)+(Mth1/KRepMth1))- basalDegStd1*Std1 -(KDegStd1*Glucose/ (threshStd1+Glucose)*Std1); 
+DMth1=  VMth1- basalDegMth1*Mth1- ((KDegMth1*Glucose)/(threshMth1+Glucose))*Mth1;
+%active state of mig1 is determined by glucose and Snf1 and Std1
+Snf1= (1+(Std1*KEnhance))/ (1+Glucose/KSnf1); %%we could try  keeping an activation thresh. constant or to have the threshold increase with Std1
+activeMig1= 1/ (1+ (Snf1/KRepSnf1Mig1));
+DHXT1= 1/(1+ Mth1/.0001)- .1*HXT1; %mth1 activation only
+DHXT2= 1/(1+(Mth1/.001)+(KMig1HXT2/.001))-.05*HXT2;
+DHXT3= 1/(1+ Mth1/.001)- .1*HXT3;
+DHXT4= 1/(1+(Mth1/KMth1HXT4)+(Std1/KStd1HXT4)+(activeMig1/KMig1HXT4))- .3*HXT4;
+DHXT7=  1/(1+ activeMig1/.1)- .1*HXT7;
+
+dout= zeros(9,1);
+dout(1)=DStd1;
+dout(2)=DMth1;
+dout(3)=Snf1;
+dout(4)=activeMig1;
+dout(5)=DHXT1;
+dout(6)=DHXT2;
+dout(7)=DHXT3;
+dout(8)=DHXT4;
+dout(9)=DHXT7;
+
+end
+end
+
+
+
+%%%%
+function modelh= Std1Test(params, mediaInput)
+%%this model is of the negative self regulation of protein Std1 
+%%%%% Std1 protein self repressed, glucose-induced degradation and basal degradation too.
+%%this model also includes mth1 as a basic protein that gets degraded with glucose.
+%%this model tries to incorporate the feed forward loop where glucose activates mig1 but also represses
+%snf1, which inhibits mig1. in this particular case glucose control is MM induction and Snf1 effect is as a subtractive
+%term on the Mig1 rate. plus Std1 is modulating the overall Mig1 inhibition
+
+modelh= @transcriptModelh;
+
+function dout=transcriptModelh(t, x)
+
+%mediaInput=smooth(mediaInput);
+Glucose=interp1(0:(numel(mediaInput)-1), mediaInput,t);
+
+
+Std1=x(1);
+Mth1=x(2);
+Snf1=x(3);
+activeMig1=x(4);
+HXT1=x(5);
+HXT2=x(6);
+HXT3=x(7);
+HXT4=x(8);
+HXT7=x(9);
+Hxt2=x(10);
+
+
+VStd1=params(1);
+KSelfStd1=params(2);
+KDegStd1=params(3);
+threshStd1=params(4);
+basalDegStd1=params(5);
+VMth1= params(6);
+basalDegMth1=params(7);
+KDegMth1=params(8);
+threshMth1=params(9);
+KRepMth1=params(10);
+KSnf1= params(11);
+KRepSnf1Mig1=params(12);
+KEnhance=params(13);
+hillactiveMig1=params(14);
+KMig1HXT4=params(15);
+KStd1HXT4=params(16);
+KMth1HXT4=params(17);
+KMig1HXT2=params(18);
+KMth1HXT2=params(19);
+KDegSnf1=params(20);
+
+
+%DStd1= VStd1/(1+(Std1/KSelfStd1)+(Mth1/KRepMth1))- basalDegStd1*Std1 -(KDegStd1*Glucose/ (threshStd1+Glucose)*Std1); 
+DStd1= VStd1/(1+(Std1/KSelfStd1) +(Mth1/KRepMth1)) - basalDegStd1*Std1 -KDegStd1*Glucose*Std1;%-(KDegStd1*Glucose/ (threshStd1+Glucose)*Std1) ;       %-((KDegStd1*Glucose/(threshStd1+Glucose)^2)*Std1); 
+DMth1=  VMth1- basalDegMth1*Mth1- ((KDegMth1*Glucose)/(threshMth1+Glucose))*Mth1;
+%active state of mig1 is determined by glucose and Snf1 and Std1
+DSnf1= 1-KDegSnf1*Glucose*Snf1 -basalDegSnf1*Snf1;%%we could try  keeping an activation thresh. constant or to have the threshold increase with Std1
+%activeMig1= 1/ (1+ (Snf1/KRepSnf1Mig1));
+
+%glucose induces activation of mig1, and is inhibited by Snf1, only in the
+%presence of Std1
+activeMig1= activeMig1*Glucose/0.01+Glucose -Snf1*Std1;
+DHXT1= 1/(1+ Mth1/.0001)- .1*HXT1; %mth1 activation only
+DHXT2= 1/(1+((Mth1/KMth1HXT2)^4)+(activeMig1/KMig1HXT2))-.1*HXT2;
+DHXT3= 1/(1+ Mth1/.001)- .1*HXT3;
+DHXT4= Std1+1/(1+(Mth1/KMth1HXT4)+(Mig1/KMig1HXT4))- .05*HXT4;
+DHXT7=  1/(1+ activeMig1/.1)- .1*HXT7;
+
+DHxt2= .3*HXT4- .3*HXT4;
+
+
+dout= zeros(9,1);
+dout(1)=DStd1;
+dout(2)=DMth1;
+dout(3)=DSnf1;
+dout(4)=activeMig1;
+dout(5)=DHXT1;
+dout(6)=DHXT2;
+dout(7)=DHXT3;
+dout(8)=DHXT4;
+dout(9)=DHXT7;
+dout(10)=DHxt2;
+end
+end
+
+
+%%%20170306 model with all Hxts, that was transcribed into python
+
+function modelh= Std1Test(params, mediaInput)
+%%this model is of the negative self regulation of protein Std1 
+%%%%% Std1 protein self repressed, glucose-induced degradation and basal degradation too.
+%%this model also includes mth1 as a basic protein that gets degraded with glucose.
+%%this model includes 2 0-1 equations, one of them snf1 and another one for active mig1.
+%%snf1 deactivates mig1. the trick is though, that snf1 deactivation of mig1 is enhanced by std1.
+%%this happens through additive repression
+
+modelh= @transcriptModelh;
+
+function dout=transcriptModelh(t, x)
+
+%mediaInput=smooth(mediaInput);
+Glucose=interp1(0:(numel(mediaInput)-1), mediaInput,t);
+
+
+Std1=x(1);
+Mth1=x(2);
+Snf1=x(3);
+activeMig1=x(4);
+HXT1=x(5);
+HXT2=x(6);
+HXT3=x(7);
+HXT4=x(8);
+HXT7=x(9);
+Hxt2=x(10);
+
+
+VStd1=params(1);
+KSelfStd1=params(2);
+KDegStd1=params(3);
+threshStd1=params(4);
+basalDegStd1=params(5);
+VMth1= params(6);
+basalDegMth1=params(7);
+KDegMth1=params(8);
+threshMth1=params(9);
+KRepMth1=params(10);
+KSnf1= params(11);
+KRepSnf1Mig1=params(12);
+KEnhance=params(13);
+hillactiveMig1=params(14);
+KMig1HXT4=params(15);
+KStd1HXT4=params(16);
+KMth1HXT4=params(17);
+KMig1HXT2=params(18);
+KMth1HXT2=params(19);
+KDegSnf1=params(20);
+basalDegSnf1=params(21);
+
+
+%DStd1= VStd1/(1+(Std1/KSelfStd1)+(Mth1/KRepMth1))- basalDegStd1*Std1 -(KDegStd1*Glucose/ (threshStd1+Glucose)*Std1); 
+DStd1= VStd1/(1+(Std1/KSelfStd1) +(Mth1/KRepMth1)) - basalDegStd1*Std1 -KDegStd1*Glucose*Std1;%-(KDegStd1*Glucose/ (threshStd1+Glucose)*Std1) ;       %-((KDegStd1*Glucose/(threshStd1+Glucose)^2)*Std1); 
+DMth1=  VMth1- basalDegMth1*Mth1- ((KDegMth1*Glucose)/(threshMth1+Glucose))*Mth1;
+%active state of mig1 is determined by glucose and Snf1 and Std1
+DSnf1=  .05+.01*Snf1+Glucose/(.01+Glucose)  - 0.05*Snf1;
+%1/(1+(Glucose/.1))-.1*Snf1; %%we could try  keeping an activation thresh. constant or to have the threshold increase with Std1
+%activeMig1= 1/ (1+ (Snf1/KRepSnf1Mig1));
+
+%glucose induces activation of mig1, and is inhibited by Snf1, only in the
+%presence of Std1
+DactiveMig1= Glucose/(0.01+Glucose)  -.1*activeMig1 -1*Snf1 *activeMig1; %-.1*activeMig1; %-.5*Snf1*activeMig1;  %*Std1;
+DHXT1= 1/(1+ Mth1/.0001)- .1*HXT1; %mth1 activation only
+DHXT2= 1/(1+((Mth1/KMth1HXT2)^4)+(activeMig1/KMig1HXT2))-.1*HXT2;
+DHXT3= 1/(1+ Mth1/.001)- .1*HXT3;
+DHXT4= +1/(1+(Mth1/KMth1HXT4)+(activeMig1/KMig1HXT4))- .05*HXT4;
+DHXT7=  1/(1+ activeMig1/.1)- .1*HXT7;
+
+DHxt2= .3*HXT4- .3*HXT4;
+
+
+dout= zeros(10,1);
+dout(1)=DStd1;
+dout(2)=DMth1;
+dout(3)=DSnf1;
+dout(4)=DactiveMig1;
+dout(5)=DHXT1;
+dout(6)=DHXT2;
+dout(7)=DHXT3;
+dout(8)=DHXT4;
+dout(9)=DHXT7;
+dout(10)=DHxt2;
+end
+end
+
+
+
+

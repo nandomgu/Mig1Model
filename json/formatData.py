@@ -1,7 +1,6 @@
 import json
 from scipy import interpolate
 locdata=json.load(open('stepsdata.json'))  
-
 t=np.around(np.linspace(0,20,250),3);
 allvars=['cy5', 'times', 'centeredtimes', 'type']
 strains=list(locdata.keys())
@@ -39,3 +38,19 @@ mat240=locdata[strain][conc][rep][np.sum(~np.isnan(locdata[strain][conc][rep]),1
 filled=[fill_nan(mat240[j, :]) for j in range(0, np.size(mat240, 0))]
 #getting the median 
 colmedian=np.nanmedian(mat240, 0)
+
+
+##importing hxt mean data
+cols=['grey' ,'orange','cyan', 'magenta', 'green', 'red', 'blue'];
+hxtmeandata=json.load(open('hxtmeandata.json'))
+strains=list(hxtmeandata.keys())
+c=0;
+plt.figure()
+for strain in strains:
+	for conc in list(hxtmeandata[strain].keys()):
+		#hxtmeandata[strain][conc]=np.array(hxtmeandata[strain][conc])
+	plt.plot(hxtmeandata[strain][conc].T, color=cols[c])     
+	c+=1;	
+	
+	
+	
