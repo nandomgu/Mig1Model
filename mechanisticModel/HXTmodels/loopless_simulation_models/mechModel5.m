@@ -60,7 +60,7 @@ degST=maxdegST*(Glucose)^hilldegST /(KdegST^hilldegST+Glucose^hilldegST);
 DMTH1= 1  - (degMT+ basaldegMT)*MTH1 ;
 
 %fixing std1 production to be 1
-DSTD1= 1 - (degST+ basaldegST)*MTH1 ;
+DSTD1= 1 - (degST+ basaldegST)*STD1 ;
 
 
 
