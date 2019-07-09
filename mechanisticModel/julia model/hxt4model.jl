@@ -639,13 +639,14 @@ regulation of mth1 over mig2 was reconstituted,
 which was the reason why mig2 was going crazy in a std1 deletion.
 after reconstitution the fit makes almost complete sense.
 sensor mutants have overall lower levels than the wild type, but
-the qualitative phenomenon
+the qualitative phenomenon is still not greatly fit
 =#
 push!(niceparams,[-0.999852, -1.26372, 0.403835, -9.24132, -9.42964, -8.19311, -0.486726, 0.176302, 1.44706, 1.47452, -2.55226, -9.45124, 1.42551, 0.411843, 0.288631, -0.220279, -0.551536, 1.16724, -0.0210462, 0.481953, 3.33342, -4.49532, 3.38703, 2.12734, 1.27722, -0.59074, 0.139484, 1.15084, -0.783974, 0.880301, -2.7309, -10.146, 0.47693, 2.02273, -2.97313, 0.850846, -0.213677, 1.3482, -1.76923, 0.829166, -0.222927, -1.41487, 1.95319, 2.08884])
+#theta 9. maxing out the score from previous round. with thetamig2mth2 on. 2395
+push!(niceparams,[-0.999852, -1.26372, 0.403832, -9.24132, -9.42964, -8.19326, -0.486726, 0.176302, 1.44706, 1.47452, -2.55226, -9.06174, 0.259888, 0.411843, 0.288631, -0.220279, -0.551536, 1.16724, -0.0210462, 0.489727, 3.32591, -4.50128, 3.38703, 2.12734, 1.27722, -0.59074, 0.139484, 1.15084, -0.783974, 0.880301, -2.7309, -10.146, 0.476931, 2.02273, -2.97313, 0.850846, -0.213677, 1.34808, -1.76923, 0.829166, -0.215866, -1.41487, 1.95319, 2.08884])
 
 
-
-##creating ranges centered on a parameter set 
+##creating ranges centered on a parameter set
 #find which parameter is not a hill factor, otherwise lower bound is 1 (zero in log)
 isnothill=convert.(Float64,  [j[1]!='n' for j in  parnames])
 nt=[((thetamm[j]-.5)*isnothill[j],thetamm[j]+.5) for j in 1:size(thetamm)[1]]
