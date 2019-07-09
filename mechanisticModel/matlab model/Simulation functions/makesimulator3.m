@@ -1,18 +1,15 @@
-function handle=makesimulator4(modelName,params )
+function handle=makesimulator3(modelName,params )
 %make makesimulator 3 is for mechanistic models, 
 %just as make simulator 2, but it allows to
 %do the fitting only on a subset of parameters while keeping
-%others fixed.
-%makesimulator 4 is the same as before but this time argsim
-%can contain the initial conditions of the model.
-
+%others fixed
 input=params.input;
 data=params.data;
 lsq=params.lsq;
 mig1=params.mig1;
 %data is a m replicate x n timepoint matrix
 %% run specific params
-modelFeatures=extractModelFeatures(modelName, [], 0); %making non negative
+modelFeatures=extractModelFeatures(modelName);
 times= linspace(0,20, 250);
 times=times(1:numel(input));
 params.times= times;
@@ -26,7 +23,7 @@ else
     outfun=@(y,d) y-d;
 end
 
-function [lsqdiff, tf,yout,d]=rampSim(pars) 
+function [lsqdiff, tf,yf,d]=rampSim(pars) 
 %
 temppars=pars; %save temp copy of parameters
 pars=params.defaultparams; %make all parameter values default
@@ -39,18 +36,11 @@ pars(params.onlyparams)=temppars(params.onlyparams);
 pars=exp(pars);
 d=nanmean(data)';
 sim=func(pars,params);
-[tf, yf]=ode15s(sim, times, params.initialconditions.*(params.initialconditions>0), modelFeatures.options);
+[tf, yf]=ode23(sim, times, [d(1), 1,0], modelFeatures.options);
 
 %s=1:size(yf(:, params.outvar),1);
 d=d(1:numel(times));
-yout=yf(:, params.outvar);
-
-try
-yf=topUp(real(yf), numel(d), Inf)';
-catch
-yf=repmat(Inf, numel(d), 1);
-end
-
+yf=yf(:, params.outvar);
 lsqdiff=outfun(yf,d);
 
 end

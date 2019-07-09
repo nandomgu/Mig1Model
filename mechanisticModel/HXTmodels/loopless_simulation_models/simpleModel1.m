@@ -12,18 +12,18 @@ function dout=transcriptModelh(t, x)
 %mediaInput=smooth(mediaInput);
 Glucose=interp1(times, mediaInput,t);
 
-mRNA= x(1);
+HXT= x(1);
 
-VmRNA=params(1);
-KmRNA=params(2);
-hillmRNA=params(3);
-KdegmRNA=params(4);
+VHXT=params(1);
+KHXT=params(2);
+hillHXT=params(3);
+KdegHXT=params(4);
 
 
-DmRNA= (VmRNA*(Glucose)^hillmRNA /(KmRNA^hillmRNA+Glucose^hillmRNA)) -KdegmRNA*mRNA;
- %(1+ (Glucose/KrepmRNA)^hillrepmRNA))
+DHXT= (VHXT*(Glucose)^hillHXT /(KHXT^hillHXT+Glucose^hillHXT)) -KdegHXT*HXT;
+ %(1+ (Glucose/KrepHXT)^hillrepHXT))
 dout= zeros(1,1);
-dout(1)=DmRNA;
+dout(1)=DHXT;
 
  
  

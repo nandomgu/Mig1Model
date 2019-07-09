@@ -1,4 +1,4 @@
-        function [x2, simulator]=exploreparamFMS(gene, argsim, pars)
+        function [x2, simulator]=exploreparmutants(gene, argsim, pars)
         %% routine to optimise a certain gene with all the argsim parameter structure.
         if~isfield(argsim, 'numstarts')
             argsim.numstarts=1000;
