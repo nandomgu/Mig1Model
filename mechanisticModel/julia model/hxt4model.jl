@@ -156,7 +156,7 @@ end
 
 
 
-#######
+####### model parameters
 
 
 # define rate constants
@@ -216,7 +216,7 @@ parameters= [dhxt4, degmth1, dmig2, ksnf3, krgt2, ksnf1, ksnf1std1, nsnf1, nmth1
 parnames= ["dhxt4", "degmth1", "dmig2", "ksnf3", "krgt2", "ksnf1", "ksnf1std1", "nsnf1", "nmth1snf3", "nmth1rgt2", "smth1", "kmig1mth1", "nmig1mth1", "kmig2mth1", "nmig2mth1", "std1tot", "istd1", "nstd1", "estd1max", "mig1tot", "imig1" , "kmig1snf1", "emig1max", "dmig2snf1", "kmig2snf1", "smig2", "kmig2std1", "nmig2std1", "kmig2mth1std1", "nmig2mth1std1" , "dhxt4max", "kdhxt4", "ndhxt4", "shxt4", "khxt4mth1", "nhxt4mth1", "khxt4std1", "nhxt4std1", "khxt4mth1std1", "nhxt4mth1std1","khxt4mig1","khxt4mig2", "nhxt4mig1", "nhxt4mig2"]
 
 
-
+#parameter ranges for solver
 lb=0.00001 #instead of zero
 sb=50  # max synthesis rates
 sk=20
@@ -639,6 +639,13 @@ regulation of mth1 over mig2 was reconstituted,
 which was the reason why mig2 was going crazy in a std1 deletion.
 after reconstitution the fit makes almost complete sense.
 sensor mutants have overall lower levels than the wild type, but
-the qualitative phenomenon 
+the qualitative phenomenon
 =#
 push!(niceparams,[-0.999852, -1.26372, 0.403835, -9.24132, -9.42964, -8.19311, -0.486726, 0.176302, 1.44706, 1.47452, -2.55226, -9.45124, 1.42551, 0.411843, 0.288631, -0.220279, -0.551536, 1.16724, -0.0210462, 0.481953, 3.33342, -4.49532, 3.38703, 2.12734, 1.27722, -0.59074, 0.139484, 1.15084, -0.783974, 0.880301, -2.7309, -10.146, 0.47693, 2.02273, -2.97313, 0.850846, -0.213677, 1.3482, -1.76923, 0.829166, -0.222927, -1.41487, 1.95319, 2.08884])
+
+
+
+##creating ranges centered on a parameter set 
+#find which parameter is not a hill factor, otherwise lower bound is 1 (zero in log)
+isnothill=convert.(Float64,  [j[1]!='n' for j in  parnames])
+nt=[((thetamm[j]-.5)*isnothill[j],thetamm[j]+.5) for j in 1:size(thetamm)[1]]
