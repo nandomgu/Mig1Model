@@ -45,6 +45,51 @@ splines=[spline2, spline4, spline1]
 
 
 
+thetamig1=1
+thetamth1=1
+thetastd1=1
+thetasnf3=1
+thetargt2=1
+thetamig2=1
+thetamig1mth1=0
+thetamig2mth1=1
+thetasnf1mig1=1
+thetasnf1mig2=1
+thetastd1hxt4=1
+thetastd1mig2=1
+thetamth1mig2=1
+
+
+
+theta=[thetamig1, thetamth1, thetastd1, thetasnf3, thetargt2, thetamig2, thetamig1mth1, thetamig2mth1,thetasnf1mig1,thetasnf1mig2, thetastd1hxt4, thetastd1mig2, thetamth1mig2]
+
+
+allthetas=[
+theta,#wt
+theta,
+theta,
+
+ablate(theta,1), #mig1ko
+ablate(theta,1),
+ablate(theta,1),
+
+ablate(theta,2),#mth1ko
+ablate(theta,2),
+ablate(theta,2),
+
+ablate(theta,3),#std1ko
+ablate(theta,3),
+ablate(theta,3),
+
+ablate(theta,5),#rgt2ko
+ablate(theta,5),
+ablate(theta,5),
+
+ablate(theta,4),#snf3ko
+ablate(theta,4),
+ablate(theta,4),
+]
+
 
 
 
@@ -64,6 +109,9 @@ function makeproblem(gspline, concentration, theta, inits, t)
 	thetamig2mth1=theta[8]
 	thetasnf1mig1=theta[9]
 	thetasnf1mig2=theta[10]
+	thetastd1hxt4=theta[11]
+	thetastd1mig2=theta[12]
+	thetamth1mig2=theta[13]
 
 inits2=copy(inits)
  if thetamig1==0
@@ -134,14 +182,14 @@ end
 		Mth1= y[4]
 		Std1= y[5]
 
-		Snf1= (ksnf1 + ksnf1std1*Std1)^nsnf1/((ksnf1 + ksnf1std1*Std1)^nsnf1 + g^nsnf1)
+		Snf1= (ksnf1 + ksnf1std1*Std1^nsnf1)/((ksnf1 + ksnf1std1*Std1)^nsnf1 + g^nsnf1)
 
-		dydt[1]= +(shxt4/(1 + thetamig1* (Mig1/khxt4mig1)^nhxt4mig1 +  thetamig2* (Mig2/khxt4mig2)^nhxt4mig2 + thetamth1*(Mth1/khxt4mth1)^nhxt4mth1 + thetastd1*(Std1/khxt4std1)^nhxt4std1 + thetamth1*thetastd1*(Mth1*Std1/ khxt4mth1std1)^nhxt4mth1std1))-dhxt4*Hxt4-(dhxt4max/(1 + (g/kdhxt4)^ndhxt4)*Hxt4)
+		dydt[1]= +(shxt4/(1 + thetamig1* (Mig1/khxt4mig1)^nhxt4mig1 +  thetamig2* (Mig2/khxt4mig2)^nhxt4mig2 + thetamth1*(Mth1/khxt4mth1)^nhxt4mth1 + thetastd1hxt4*thetastd1*(Std1/khxt4std1)^nhxt4std1 + thetamth1*thetastd1*(Mth1*Std1/ khxt4mth1std1)^nhxt4mth1std1))-dhxt4*Hxt4-(dhxt4max/(1 + (g/kdhxt4)^ndhxt4)*Hxt4)
 		dydt[2]= thetamig1*(imig1*(mig1tot - Mig1))-(emig1max*Snf1*Mig1/(kmig1snf1 + Mig1))
-		dydt[3]= +(smig2/(1 + thetamth1*(Mth1/kmig2mth1)^nmig2mth1 + thetastd1*(Std1/kmig2std1)^nmig2std1 + thetastd1*thetamth1*(Mth1*Std1/ kmig2mth1std1)^nmig2mth1std1))-dmig2*Mig2-(dmig2snf1*Snf1*Mig2/(kmig2snf1 + Mig2))
+		dydt[3]= +(smig2/(1 + thetamth1mig2*thetamth1*(Mth1/kmig2mth1)^nmig2mth1 + thetastd1mig2*thetastd1*(Std1/kmig2std1)^nmig2std1 + thetamth1mig2*thetastd1mig2*thetastd1*thetamth1*(Mth1*Std1/ kmig2mth1std1)^nmig2mth1std1))-dmig2*Mig2-(dmig2snf1*Snf1*Mig2/(kmig2snf1 + Mig2))
 		#dydt[4]= +(smth1/(1 + (Mig1/kmig1mth1)^nmig1mth1 + (Mig2/kmig2mth1)^nmig2mth1))-degmth1*Mth1-(g^nmth1snf3/(ksnf3^nmth1snf3 + g^nmth1snf3)*Mth1)-(g^nmth1rgt2/(krgt2^nmth1rgt2 + g^nmth1rgt2)*Mth1)
 		dydt[4]= thetamth1* (smth1/(1 + thetamig1mth1*(Mig1/kmig1mth1)^nmig1mth1 + thetamig2mth1*(Mig2/kmig2mth1)^nmig2mth1)-degmth1*Mth1- (thetasnf3*(g^nmth1snf3/(ksnf3^nmth1snf3 + (g^nmth1snf3)))*Mth1)- thetargt2*(g^nmth1rgt2/(krgt2^nmth1rgt2 + g^nmth1rgt2))*Mth1)
-		dydt[5]= thetastd1*(istd1*(std1tot - Std1)-(estd1max*g^nstd1/(krgt2^nstd1 + g^nstd1)*Std1))
+		dydt[5]= thetastd1*(istd1*(std1tot - Std1)- thetargt2*(estd1max*g^nstd1/(krgt2^nstd1 + g^nstd1)*Std1)) #+ thetasnf3*(estd1max*g^nstd1/(ksnf3^nstd1 + g^nstd1)*Std1))
 
 	end
 
@@ -341,47 +389,6 @@ end
 
 
 #declaring theta to activate or inactivate components in model
-thetamig1=1
-thetamth1=1
-thetastd1=1
-thetasnf3=1
-thetargt2=1
-thetamig2=1
-thetamig1mth1=0
-thetamig2mth1=0
-thetasnf1mig1=1
-thetasnf1mig2=1
-
-
-theta=[thetamig1, thetamth1, thetastd1, thetasnf3, thetargt2, thetamig2, thetamig1mth1, thetamig2mth1,thetasnf1mig1,thetasnf1mig2]
-
-
-allthetas=[
-theta,#wt
-theta,
-theta,
-
-ablate(theta,1), #mig1ko
-ablate(theta,1),
-ablate(theta,1),
-
-ablate(theta,2),#mth1ko
-ablate(theta,2),
-ablate(theta,2),
-
-ablate(theta,3),#std1ko
-ablate(theta,3),
-ablate(theta,3),
-
-ablate(theta,5),#rgt2ko
-ablate(theta,5),
-ablate(theta,5),
-
-ablate(theta,4),#snf3ko
-ablate(theta,4),
-ablate(theta,4),
-]
-
 
 ###
 #For default tolerances, AutoTsit5(Rosenbrock23())
@@ -451,6 +458,7 @@ return sum(lsq)
 end
 
 #simulate and calculate the square difference for each condition
+#using 2 simulators, and pick the one with the best score
 function serialall3(pars)
 #plot(1)
 finalarrs=[]
@@ -484,6 +492,68 @@ end
 
 return sum(lsq)
 end
+
+
+#troubleshooting simulation.
+function serialallts(pars)
+#plot(1)
+finalarrs=[]
+lsq=zeros(18)
+concs=repeat([0.2, 0.4, 1], 6)
+xx=[]
+yy=[]
+zz=[]
+for k in 1:size(concs,1)
+println("condition ", k)
+println("solver ABDF2")
+prob=makeproblem(gspline,concs[k], allthetas[k], inits, t)
+try
+sol= solve(prob(pars),ABDF2(), saveat=0.1)
+arr=[[j[i] for j in sol.u] for i=1:length(sol.u[1])]
+#push!(finalarrs, arr[1])
+#plot!(arr[1], xlims=(0,20))
+xx=sum((arr[1]-splines[k](sol.t)).^2)
+println("result: ", xx)
+catch err
+	println("simulation failed")
+	println(err)
+	xx=1000000.0
+end
+try
+println("solver TRBDF2")
+		sol= solve(prob(pars),TRBDF2(), saveat=0.1)
+		arr=[[j[i] for j in sol.u] for i=1:length(sol.u[1])]
+		#push!(finalarrs, arr[1])
+		yy=sum((arr[1]-splines[k](sol.t)).^2)
+println("result: ", yy)
+catch err
+	println("simulation failed")
+	println(err)
+	yy=1000000.0
+end
+
+try
+println("solver Rosenbrock23")
+		sol= solve(prob(pars),Rosenbrock23(), saveat=0.1)
+		arr=[[j[i] for j in sol.u] for i=1:length(sol.u[1])]
+		#push!(finalarrs, arr[1])
+		zz=sum((arr[1]-splines[k](sol.t)).^2)
+println("result: ", yy)
+catch err
+	println("simulation failed")
+	println(err)
+	zz=1000000.0
+end
+
+
+
+lsq[k]= min(xx,yy,zz)
+end
+
+return sum(lsq), lsq
+end
+
+
 
 
 ###simulate and plot  all simulation results
@@ -645,8 +715,17 @@ push!(niceparams,[-0.999852, -1.26372, 0.403835, -9.24132, -9.42964, -8.19311, -
 #theta 9. maxing out the score from previous round. with thetamig2mth2 on. 2395
 push!(niceparams,[-0.999852, -1.26372, 0.403832, -9.24132, -9.42964, -8.19326, -0.486726, 0.176302, 1.44706, 1.47452, -2.55226, -9.06174, 0.259888, 0.411843, 0.288631, -0.220279, -0.551536, 1.16724, -0.0210462, 0.489727, 3.32591, -4.50128, 3.38703, 2.12734, 1.27722, -0.59074, 0.139484, 1.15084, -0.783974, 0.880301, -2.7309, -10.146, 0.476931, 2.02273, -2.97313, 0.850846, -0.213677, 1.34808, -1.76923, 0.829166, -0.215866, -1.41487, 1.95319, 2.08884])
 
+#=theta 10. this contains a functional version of the rgt2 mutant (thetargt2) over std1,
+which was not included before. this yields a qualitatively accurate model.
+this version still does not capture the effect of the snf3 mutant,
+showing low glucose expression when it should be gravely diminished.
+=#
+push!(niceparams,[-1.09883, -1.2407, 0.597548, -8.85889, -9.09216, -8.00027, -0.797185, 0.0149666, 1.10511, 1.84656, -2.50323, -9.14348, 0.537932, 0.346894, 0.321236, 0.0224742, -0.818667, 1.22954, -0.390288, 0.234259, 3.18123, -4.12202, 2.99951, 2.1878, 1.59932, -0.418731, 0.611756, 1.10609, -0.563993, 1.36311, -2.74879, -10.0942, 0.350835, 2.10463, -3.04331, 0.893875, -0.0754482, 1.55275, -2.00151, 1.015, -0.590292, -1.36041, 1.8196, 2.49419])
+
 
 ##creating ranges centered on a parameter set
 #find which parameter is not a hill factor, otherwise lower bound is 1 (zero in log)
 isnothill=convert.(Float64,  [j[1]!='n' for j in  parnames])
-nt=[((thetamm[j]-.5)*isnothill[j],thetamm[j]+.5) for j in 1:size(thetamm)[1]]
+pars=copy(theta3)
+#we assume parameters are in log
+nt=[((pars[j]-.5)*isnothill[j],pars[j]+.5) for j in 1:size(pars)[1]]
