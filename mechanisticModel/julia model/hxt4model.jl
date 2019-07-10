@@ -42,7 +42,12 @@ spline4=Spline1D(tim[1:229], dm2[2][1:229])
 spline1=Spline1D(tim[1:229], dm2[3][1:229])
 splines=[spline2, spline4, spline1]
 
-
+function ablate(theta, ind)
+	#function to change the genotype of an array
+abarray=ones(size(theta))
+abarray[ind]=0
+return theta.*abarray
+end
 
 
 thetamig1=1
@@ -315,9 +320,9 @@ sn=6
 		(1.0,6.0),#	nhxt4mig1,
 		(1.0,6.0)#	nhxt4mig2,
 	]
-subs(x)=  if !isfinite(x) return -30.0 else return x end
+subss(x)=  if !isfinite(x) return -30.0 else return x end
 lrange=[log.(j) for j in  srange] # getting some infs because of zeros
-trange=[subs.(j) for j in lrange]
+trange=[subss.(j) for j in lrange]
 
 
 # define initial conditions
@@ -378,14 +383,6 @@ end
 
 end
 
-
-
-function ablate(theta, ind)
-	#function to change the genotype of an array
-abarray=ones(size(theta))
-abarray[ind]=0
-return theta.*abarray
-end
 
 
 #declaring theta to activate or inactivate components in model
@@ -569,22 +566,26 @@ arr=[]
 prob=makeproblem(gspline,concs[k], allthetas[k], inits, t)
 println(k, concs[k])
 try
+println("trying ABDF2\n")
 sol= solve(prob(pars),ABDF2(), saveat=0.1)
+global tt=sol.t #making sure we define a time that can be used in the next for loop
 arr=[[j[i] for j in sol.u] for i=1:length(sol.u[1])]
 
 #plot!(arr[1], xlims=(0,20))
 
 xx=sum((arr[1]-splines[k](sol.t)).^2)
-catch
-
+catch err
+	print("simulation failed")
 	xx=1000000.0
 end
 #println(xx)
 	try
+		println("trying TRBDF2\n")
 		sol= solve(prob(pars),TRBDF2(), saveat=0.1)
 		arr=[[j[i] for j in sol.u] for i=1:length(sol.u[1])]
 		yy=sum((arr[1]-splines[k](sol.t)).^2)
-	catch
+	catch err
+		print("simulation failed")
 	yy=1000000.0
 end
 println("printing")
@@ -597,14 +598,12 @@ end
 #println(yy)
 lsq[k]= min(xx,yy)
 
-
-
 end
 strainnames=["WT","mig1ko","mth1ko","std1ko","rgt2ko","snf3ko"]
 plots=[];
 c=1
       for j=1:3:16
-       push!(plots, plot(sol.t, finalarrs[j:j+2], color=[:cyan :blue :purple],title=strainnames[c],legend=false, titlefontsize=5))
+       push!(plots, plot( tt, finalarrs[j:j+2], color=[:cyan :blue :purple],title=strainnames[c],legend=false, titlefontsize=5))
 c+=1
        end
 plot(plots[1],plots[2], plots[3], plots[4], plots[5], plots[6], layout=(3,2))
