@@ -1,4 +1,4 @@
-using DifferentialEquations, Sundials, Dierckx, JSON, JLD2, BlackBoxOptim, StatsPlots
+using DifferentialEquations, Sundials, Dierckx, JSON, JLD2, BlackBoxOptim, StatsPlots, MATLAB
 
 
 #importing data through json
