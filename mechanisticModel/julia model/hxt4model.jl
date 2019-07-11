@@ -81,6 +81,7 @@ theta=[thetamig1, thetamth1, thetastd1, thetasnf3, thetargt2, thetamig2, thetami
 #= generating thetas for each of the conditions we have data for,
 and according to theorder of the condition means set we imported.
 =#
+function makethetamatrix(theta)
 allthetas=[
 theta,#wt
 theta,
@@ -106,6 +107,9 @@ ablate(theta,4),#snf3ko
 ablate(theta,4),
 ablate(theta,4),
 ]
+
+end
+
 
 #bundling parameters into groups.
 mig1params=[20 21 22 23]
@@ -466,7 +470,9 @@ end
 
 #simulate and calculate the square difference for each condition
 #using 2 simulators, and pick the one with the best score
-function serialall3(pars)
+function makesimulator( allthetas, gspline, inits, t)
+
+function serialall3(pars, allthetas)
 #plot(1)
 finalarrs=[]
 lsq=zeros(18)
@@ -500,6 +506,8 @@ end
 return sum(lsq)
 end
 
+func(pars)= serialall3(pars, allthetas)
+end
 
 #troubleshooting simulation.
 function serialallts(pars)
@@ -736,17 +744,20 @@ push!(niceparams, [-1.1546942232439559, -1.0887322970066144, 0.7132935756630442,
 
 
 
+#same as above but we give it an accessible name. parameters are in log.
+pars=[-1.1546942232439559, -1.0887322970066144, 0.7132935756630442, -8.383416706182768, -8.808551521233642, -7.663202682401169, -0.8490911301724443, 0.01942088874544573, 0.8095384545117216, 1.1452570081581448, -2.542702044988643, -9.170542009379027, 0.9808344028633106, 0.28656559774427465, 0.37786454104517064, 0.10068945545460253, -0.9264555562961837, 0.8472390538177788, -0.35235592543987754, 0.22184004676371108, 3.119263346803683, -3.958848702341918, 2.800400741543633, 1.957424585540502, 1.5110268619211527, -0.10241264506686007, 0.5794946667353741, 1.1430127832452404, -0.7549280339651918, 1.7370792587195765, -2.9277235184473414, -10.063799157410548, 0.2902557443376703, 2.137503781773038, -3.045651546769331, 1.0621630786570095, -0.07740907614272813, 1.3161948485904997, -2.369571961625992, 0.5449457722738957, -0.46257286319590596, -1.108626011434643, 2.0978946817087203, 2.5243779161783877]
+
 
 ##creating ranges centered on a parameter set
 #find which parameter is not a hill factor, otherwise lower bound is 1 (zero in log)
 isnothill=convert.(Float64,  [j[1]!='n' for j in  parnames])
-pars=copy(theta3)
+#pars=copy(theta3)
 #we assume parameters are in log
 nt=[((pars[j]-.5)*isnothill[j],pars[j]+.5) for j in 1:size(pars)[1]]
 
 
 ###making prior distributions array based on the best parameters found
-pars=copy(theta11)
+#pars=copy(theta11)
 #degradation mapped to normal distribution
 dss=[]
 for j in 1:size(pars)[1]
@@ -759,3 +770,44 @@ else
 
 end
 end
+
+
+#########TEST CODE
+#########test run of an individual simulation
+#best fit parameters
+pars=[-1.1546942232439559, -1.0887322970066144, 0.7132935756630442, -8.383416706182768, -8.808551521233642, -7.663202682401169, -0.8490911301724443, 0.01942088874544573, 0.8095384545117216, 1.1452570081581448, -2.542702044988643, -9.170542009379027, 0.9808344028633106, 0.28656559774427465, 0.37786454104517064, 0.10068945545460253, -0.9264555562961837, 0.8472390538177788, -0.35235592543987754, 0.22184004676371108, 3.119263346803683, -3.958848702341918, 2.800400741543633, 1.957424585540502, 1.5110268619211527, -0.10241264506686007, 0.5794946667353741, 1.1430127832452404, -0.7549280339651918, 1.7370792587195765, -2.9277235184473414, -10.063799157410548, 0.2902557443376703, 2.137503781773038, -3.045651546769331, 1.0621630786570095, -0.07740907614272813, 1.3161948485904997, -2.369571961625992, 0.5449457722738957, -0.46257286319590596, -1.108626011434643, 2.0978946817087203, 2.5243779161783877]
+#genotype. we start with the wild type.
+
+#first six entries define the genes that are present or absent.
+#following entries define presence of regulatory branches.
+#e.g. thetamig1mth1=0 means that mig1 is set to not not repress mth1.
+#full theta is the full model, with all branches present (except for the mig1mth1 branch which just doesn't fit the data)
+fulltheta=[thetamig1, thetamth1, thetastd1, thetasnf3, thetargt2, thetamig2, thetamig1mth1, 1,thetasnf1mig1,thetasnf1mig2, thetastd1hxt4, thetastd1mig2, thetamth1mig2]
+#this line sets up an array of 18 genotypes so that all mutants can be simulated for one parameter set.
+#allthetas is called within serialall3
+allthetas= makethetamatrix(fulltheta)
+simulate=makesimulator(allthetas, gspline, inits, t)
+lsqsumfull= simulate(pars)
+#plotting the result for all simulations
+#serialallplot(pars)
+#generating all model variants in the wt version.
+#the above theta from 1 to 7, followed by an array between 000000 and 111111
+allvariants=[vcat(theta[1:7], k[:])  for k in [convert.(Int, mat"de2bi($j,6)") for j in 0:63]]
+
+
+
+lsqsummut=ones(size(allvariants)[1])*NaN
+global c=1
+#for this parameter set, simulate all model variants
+for j in 1:size(allvariants)[1]
+global c
+#simulating some variant of the model
+allthetas=makethetamatrix(allvariants[j])
+#making a simulator function for this genotype
+simulate=makesimulator(allthetas, gspline, inits, t)
+lsqsummut[c]= simulate(pars)
+c=c+1
+end
+
+
+###
