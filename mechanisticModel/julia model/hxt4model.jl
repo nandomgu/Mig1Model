@@ -470,8 +470,8 @@ end
 
 #simulate and calculate the square difference for each condition
 #using 2 simulators, and pick the one with the best score
-function makesimulator( allthetas, gspline, inits, t)
-
+function makesimulator( theta, gspline, inits, t)
+allthetas=makethetamatrix(theta)
 function serialall3(pars, allthetas)
 #plot(1)
 finalarrs=[]
@@ -785,8 +785,8 @@ pars=[-1.1546942232439559, -1.0887322970066144, 0.7132935756630442, -8.383416706
 fulltheta=[thetamig1, thetamth1, thetastd1, thetasnf3, thetargt2, thetamig2, thetamig1mth1, 1,thetasnf1mig1,thetasnf1mig2, thetastd1hxt4, thetastd1mig2, thetamth1mig2]
 #this line sets up an array of 18 genotypes so that all mutants can be simulated for one parameter set.
 #allthetas is called within serialall3
-allthetas= makethetamatrix(fulltheta)
-simulate=makesimulator(allthetas, gspline, inits, t)
+
+simulate=makesimulator(fulltheta, gspline, inits, t)
 lsqsumfull= simulate(pars)
 #plotting the result for all simulations
 #serialallplot(pars)
@@ -794,17 +794,14 @@ lsqsumfull= simulate(pars)
 #the above theta from 1 to 7, followed by an array between 000000 and 111111
 allvariants=[vcat(theta[1:7], k[:])  for k in [convert.(Int, mat"de2bi($j,6)") for j in 0:63]]
 
-
-
 lsqsummut=ones(size(allvariants)[1])*NaN
 global c=1
 #for this parameter set, simulate all model variants
 for j in 1:size(allvariants)[1]
 global c
 #simulating some variant of the model
-allthetas=makethetamatrix(allvariants[j])
-#making a simulator function for this genotype
-simulate=makesimulator(allthetas, gspline, inits, t)
+#making a simulator function for this model variant
+simulate=makesimulator(allvariants[j], gspline, inits, t)
 lsqsummut[c]= simulate(pars)
 c=c+1
 end
