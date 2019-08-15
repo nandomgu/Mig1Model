@@ -825,9 +825,14 @@ lsqsummut[c]= simulate(pars)
 c=c+1
 end
 
-
+###PLOTTING DATA AND FITS
 ###make sure type is set to 2 in makesimulator
-#make sure to set the right outvar in  makesimulator
+#plot the dynamics of each component in all conditions. generate pdfs with the plots.
+#cyan is 0.2%
+#blue is 0.4%
+#purple is 1%
+
+#
 for outvar in 1:5 #we loop through all species
 sim=makesimulator(theta, gspline, inits, t, outvar)
 a,b=sim(pars) #a is the times and b is the simulated datapoints
