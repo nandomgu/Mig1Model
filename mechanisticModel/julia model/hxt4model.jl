@@ -30,8 +30,8 @@ hspline4=Spline1D(tim[1:229], dm2[2][1:229]) #hxt4 mean in 0.4% glucose
 
 #=for each data mean, make a
  spline interpolant that can be sampled at any arbitrary time.
-=# and can be called in a loop.
-
+and can be called in a loop.
+=#
 splines=Array{Spline1D}(undef, (18)) #making splines for original data
 for j in 1:18
 if j==7
@@ -120,7 +120,7 @@ hxt4synthesis =[31,32,33,34]
 #=FUNCTION TO MAKE AN ODE PROBLEM
 AS A F(GLUCOSE_TRACE, G_LEVEL, GENOTYPE, INITIAL_CONDITIONS, TSPAN)
 =#
-function makeproblem(gspline, concentration, theta, inits, t)
+function makeproblem(input, concentration, theta, inits, t)
 
 	#IMPORTING THE GENOTYPES
 	thetamig1=theta[1]
@@ -155,7 +155,7 @@ end
 
 #SYSTEM OF ODES WITH A TIME VARYING INPUT
 	function hxtsim(dydt, y, parameters, t)
-		g=gspline(t)*concentration
+		g=input(t)*concentration
 		dhxt4= parameters[1]
 		degmth1= parameters[2]
 		dmig2= parameters[3]
@@ -470,11 +470,18 @@ end
 
 #simulate and calculate the square difference for each condition
 #using 2 simulators, and pick the one with the best score
-function makesimulator( theta, gspline, inits, t)
+function makesimulator( theta, gspline, inits, t, outvar=1)
 allthetas=makethetamatrix(theta)
 function serialall3(pars, allthetas)
 #plot(1)
-finalarrs=[]
+#=
+type 1 outputs the lsq sum
+type 2 outputs the simulated data
+type 3 outputs the lsq for each condition
+=#
+type=2
+finalarr= a=fill([], 18)
+finalt=fill([], 18)
 lsq=zeros(18)
 concs=repeat([0.2, 0.4, 1], 6)
 xx=[]
@@ -485,17 +492,21 @@ prob=makeproblem(gspline,concs[k], allthetas[k], inits, t)
 try
 sol= solve(prob(pars),ABDF2(), saveat=0.1)
 arr=[[j[i] for j in sol.u] for i=1:length(sol.u[1])]
+finalarr[k]=arr[outvar]
+finalt[k]=sol.t
 #push!(finalarrs, arr[1])
 #plot!(arr[1], xlims=(0,20))
-xx=sum((arr[1]-splines[k](sol.t)).^2)
+xx=sum((arr[outvar]-splines[k](sol.t)).^2)
 catch
 	xx=1000000.0
 end
 	try
-		sol= solve(prob(pars),TRBDF2(), saveat=0.1)
+		sol= solve(prob(pars),TRBDF2(),  saveat=0.1)
 		arr=[[j[i] for j in sol.u] for i=1:length(sol.u[1])]
 		#push!(finalarrs, arr[1])
-		yy=sum((arr[1]-splines[k](sol.t)).^2)
+		finalarr[k]=arr[outvar]
+		finalt[k]=sol.t
+		yy=sum((arr[outvar]-splines[k](sol.t)).^2)
 	catch
 	yy=1000000.0
 end
@@ -503,7 +514,15 @@ end
 lsq[k]= min(xx,yy)
 end
 
-return sum(lsq)
+if type==1
+	return sum(lsq)
+elseif type==2
+	return finalt, finalarr
+elseif type==3
+	return lsq
+end
+
+
 end
 
 func(pars)= serialall3(pars, allthetas)
@@ -807,4 +826,22 @@ c=c+1
 end
 
 
-###
+###make sure type is set to 2 in makesimulator
+#make sure to set the right outvar in  makesimulator
+for outvar in 1:5 #we loop through all species
+sim=makesimulator(theta, gspline, inits, t, outvar)
+a,b=sim(pars) #a is the times and b is the simulated datapoints
+pl=[]
+speciesnames= ["Hxt4", "Mig1", "Mig2", "Mth1", "Std1"]
+strainnames=["WT", "mig1ko", "mth1ko", "std1ko", "rgt2ko", "snf3ko"]
+strainnamesall=repeat(strainnames, inner=3)
+
+[push!(pl, plot(a[k:k+2], b[k:k+2], color= [:cyan :blue :purple], w=2,legend=false, title=speciesnames[outvar]*" in "*strainnamesall[k]      ) ) for k in 1:3:16]
+#adding scatter plots of real data
+plot(pl[1], pl[2], pl[3], pl[4], pl[5], pl[6])
+if outvar==1
+[plot!(pl[k], tim[1:229], [splines[j](tim[1:229]) for j in ((k*3)-2):(k*3)], color= [:cyan :blue :purple], alpha=.5, m=([:cyan :blue :purple], 2, Plots.stroke(0, :cyan)), legend=false, title=strainnames[k]) for k in 1:6]
+end
+plot(pl[1], pl[2], pl[3], pl[4], pl[5], pl[6])
+savefig(speciesnames[outvar]*"_dynamics.pdf")
+end
