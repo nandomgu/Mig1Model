@@ -1,0 +1,105 @@
+input g
+# glucose sensors
+###
+# Snf3 (threshold for glucose)
+parameter k3= 0.2
+# Rgt2 (threshold for glucose)
+parameter k2= 0.6
+
+# Snf1
+###
+parameter ksnf1= 0.4
+parameter ksnf1std1= 0.1
+parameter nsnf1= 2.3
+parameter nsnf2= 2
+parameter Snf1tot= 12
+variable Snf1= Snf1tot*(1 + Std1/ksnf1std1)^nsnf1/((1 + Std1/ksnf1std1)^nsnf1 + (g/ksnf1)^nsnf2)
+
+# Mth1
+###
+# basal degradation
+parameter dmth1= 0.3
+Mth1 -> null; dmth1
+# induced degradation
+parameter nmth1snf3= 1.2
+parameter nmth1rgt2=  1.4
+parameter dmth1snf3= 0.6
+parameter dmth1rgt2= 0.7
+Mth1 => null; dmth1snf3*g^nmth1snf3/(k3^nmth1snf3 + g^nmth1snf3)*Mth1
+Mth1 => null; dmth1rgt2*g^nmth1rgt2/(k2^nmth1rgt2 + g^nmth1rgt2)*Mth1
+# synthesis
+parameter smth1= 0.3
+parameter kmig1mth1= 0.2
+parameter nmig1mth1= 1.3
+parameter kmig2mth1= 0.4
+parameter nmig2mth1= 1.5
+null => Mth1 ; smth1/(1 + (Mig1/kmig1mth1)^nmig1mth1 + (Mig2/kmig2mth1)^nmig2mth1)
+
+# Std1
+###
+parameter std1tot= 2.1
+# nuclear entry
+parameter istd1= 3.4
+null => Std1 ; istd1*(std1tot - Std1)
+# nuclear exit
+parameter nstd1= 1.5
+parameter estd1max= 3.1
+Std1 => null ; estd1max*g^nstd1/(k2^nstd1 + g^nstd1)*Std1
+
+# Mig1
+###
+parameter mig1tot= 1
+# nuclear entry
+parameter imig1= 3.4
+null => Mig1 ; imig1*(mig1tot - Mig1)
+# nuclear exit
+parameter kmig1snf1= 0.8
+parameter emig1max= 3.1
+Mig1 => null ; emig1max*Snf1*Mig1/(kmig1snf1 + Mig1)
+
+# Mig2
+###
+# basal degradation
+parameter dmig2= 0.3
+Mig2 -> null ; dmig2
+# induced degradation
+parameter dmig2snf1= 2.1
+parameter kmig2snf1= 2.4
+Mig2 => null ; dmig2snf1*Snf1*Mig2/(kmig2snf1 + Mig2)
+# synthesis
+parameter smig2= 0.5
+parameter kmig2mth1= 12
+parameter nmig2mth1= 1.3
+parameter kmig2std1= std1tot/2
+parameter nmig2std1= 2.1
+parameter kmig2mth1std1= 0.3
+parameter nmig2mth1std1= 1.2
+null => Mig2 ; smig2/(1 + (Mth1/kmig2mth1)^nmig2mth1 + (Std1/kmig2std1)^nmig2std1 + (Mth1*Std1/ kmig2mth1std1)^nmig2mth1std1)
+
+# Hxt4
+###
+# basal degradation
+parameter dhxt4= 0.03
+Hxt4 -> null ; dhxt4
+# repressed degradation
+parameter dhxt4max= 2.1
+parameter kdhxt4= 2.4
+parameter ndhxt4= 1
+Hxt4 => null ; dhxt4max/(1 + (g/kdhxt4)^ndhxt4)*Hxt4
+# synthesis
+parameter shxt4= 0.5
+parameter khxt4mth1= 12
+parameter nhxt4mth1= 1.3
+parameter khxt4std1= std1tot/2
+parameter nhxt4std1= 2.1
+parameter khxt4mth1std1= 0.3
+parameter nhxt4mth1std1= 1.2
+null => Hxt4 ; shxt4/(1 + (Mth1/khxt4mth1)^nhxt4mth1 + (Std1/khxt4std1)^nhxt4std1 + (Mth1*Std1/ khxt4mth1std1)^nhxt4mth1std1)
+
+
+# initial conditions (no glucose)
+Mth1= smth1/dmth1
+Std1= std1tot
+Mig1= 0
+Mig2= 0
+Hxt4= 0
