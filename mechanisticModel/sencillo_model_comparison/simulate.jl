@@ -1,5 +1,7 @@
+#script assumes you are at the root of the Mig1Model repository
+cd("/Users/s1259407/Dropbox/PhD/phd_peter_swain/data/plate_reader_data/PythonScripts/Mig1Model/")
 #file thad describes all the modifications of parameters for each genotype.
-include("genotypes.jl")
+include("./mechanisticModel/sencillo_model_comparison/genotypes.jl")
 
 function trysolve(prob, pars, datamean, datastd) #main function to solve a system with two solvers and return a large value if both fail. 
 
@@ -79,22 +81,31 @@ solver=ABDF2
 
 #importing data through json
 #these are cell traces
-celldata=JSON.parsefile("/Users/s1259407/Dropbox/PhD/phd_peter_swain/R/hxtmeandata.json", dicttype=Dict)
+celldata=JSON.parsefile("./json/hxtmeandata.json", dicttype=Dict)
 #=these are the means for the 18 conditions.
  #each 3 is one genotype, and for each genotype
  # there are three glucose concentrations (0.2%, 0.4%, 1%)
 =#
-datameans=JSON.parsefile("/Users/s1259407/Documents/MATLABGIT/fitdatameans.json", dicttype=Dict)
+datameans=JSON.parsefile("./json/allfitmeans.json", dicttype=Dict)
 #ordering the data so that each entry is one phenotype
 dm2=[[datameans[j][k] for j in 1:size(datameans)[1]] for k in 1:size(datameans[1])[1]]
 
-subs(x)=  if typeof(x)==String return missing else return x end
+
+
+subsd(x)=  if typeof(x)==String return 1000 else return x end # if it is a string(missing value) return a st of 1000  to minimise the relevance of this point.
+
+datastd=JSON.parsefile("./json/allfitstd.json", dicttype=Dict)
+#ordering the data so that each entry is one phenotype
+ds2=[[subsd(datastd[j][k]) for j in 1:size(datastd)[1]-1] for k in 1:size(datastd[1])[1]]
+
+
 
 #Data means for 18 conditions
 #=for each data mean, make a
 # spline interpolant that can be sampled at any arbitrary time.
 #and can be called in a loop.
 =#
+subs(x)=  if typeof(x)==String return missing else return x end
 
 global splines=Array{Spline1D}(undef, (18)) #making splines for original data
 for j in 1:18
@@ -117,7 +128,7 @@ genotypes= repeat([wt,mig1ko, mth1ko,  std1ko, rgt2ko, snf3ko], inner=3) #genoty
 concs=repeat([0.2, 0.4, 1], 6) # glucose concentrations  in the order given by data.
 
 #add paths to more files for example.
-modelfile="/Users/s1259407/Dropbox/PhD/phd_peter_swain/data/plate_reader_data/PythonScripts/sencillo/hxt4model3d.jl"
+modelfile="./mechanisticModel/sencillo_model_comparison/sencillo_models/hxt4model3d.jl"
 
 #making array of problems ready to receive parameter sets
 allprobs=makeproblem.([modelfile], [x], [y], concs, [tt], genotypes)
