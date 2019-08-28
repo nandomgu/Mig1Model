@@ -527,7 +527,7 @@ class sencillo:
             tupler=')'
 
             # define parameters
-            out.write('using Dierckx\nUsing DifferentialEquations\n')
+            out.write('using Dierckx\nUsing DifferentialEquations\n\using DataStructures\n\n')
             out.write('function wt(params)\n\tparams\nend\n\n')
             out.write(commt + ' parameters\n')
             outstring= ''
@@ -664,7 +664,7 @@ class sencillo:
         else:
             out= sys.stdout
             ofile= self.name
-        out.write('using DifferentialEquations\n\n')
+        #out.write('using DifferentialEquations\nusing DataStructures\nusing Dierckx')
 
         # function for odeint
         out.write('function ' + 'model' + '(dydt, y, parameters, t)\n')

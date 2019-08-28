@@ -1,3 +1,5 @@
+using JSON
+using Distributions
 #script assumes you are at the root of the Mig1Model repository
 cd("/Users/s1259407/Dropbox/PhD/phd_peter_swain/data/plate_reader_data/PythonScripts/Mig1Model/")
 #file thad describes all the modifications of parameters for each genotype.
@@ -93,10 +95,18 @@ dm2=[[datameans[j][k] for j in 1:size(datameans)[1]] for k in 1:size(datameans[1
 
 
 subsd(x)=  if typeof(x)==String return 1000 else return x end # if it is a string(missing value) return a st of 1000  to minimise the relevance of this point.
+subzero(x)=  if x==0 return 1 else return x end # if it is 0, return 1  in order not to divide by zero.
 
-datastd=JSON.parsefile("./json/allfitstd.json", dicttype=Dict)
-#ordering the data so that each entry is one phenotype
-ds2=[[subsd(datastd[j][k]) for j in 1:size(datastd)[1]-1] for k in 1:size(datastd[1])[1]]
+meanerr=JSON.parsefile("./json/meanerr.json", dicttype=Dict)#doesn't need ordering 
+
+me2=[subzero.(subsd.(j)) for j in datastd]
+
+
+stdmeans=JSON.parsefile("./json/stdmeans.json", dicttype=Dict)#doesn't need ordering 
+
+sm2=[subzero.(subsd.(j)) for j in stdmeans]
+
+
 
 
 
@@ -128,7 +138,7 @@ genotypes= repeat([wt,mig1ko, mth1ko,  std1ko, rgt2ko, snf3ko], inner=3) #genoty
 concs=repeat([0.2, 0.4, 1], 6) # glucose concentrations  in the order given by data.
 
 #add paths to more files for example.
-modelfile="./mechanisticModel/sencillo_model_comparison/sencillo_models/hxt4model3d.jl"
+modelfile="./mechanisticModel/sencillo_model_comparison/hxt4model3d.jl"
 
 #making array of problems ready to receive parameter sets
 allprobs=makeproblem.([modelfile], [x], [y], concs, [tt], genotypes)
@@ -136,19 +146,18 @@ allprobs=makeproblem.([modelfile], [x], [y], concs, [tt], genotypes)
 #taking the log of the parameters and capping the zeros to -30
 pars=[p[1]=>subss(log(p[2])) for p in parameters]
 
-
-
 ##PARAMETER BOUNDS
+# values in the data are normalised to the values of mig1  before glucose, which are pretty constant. estimated as 1= 100 molecules
 
 # [1.0e-3, 120] #synthesis of ribosomes
 # [0.1, 2.5e3] #degradation
 # [0.1, 2.5e4] #nuclear import/export
 # [1.0e-3, 1.0e3] #glucose K
-# [1.0e-3, 1.0e3] # in Mig1 units
+# [1.0e-3, 1.0e3] # transcription factor affities in Mig1 units
 # [1.0, 10.0] #hill factors
 
  bounds=[
- :k3=>[1.0e-3, 1.0e3],
+:k3=>[1.0e-3, 1.0e3],
 :k2=> [1.0e-3, 1.0e3],
 :ksnf1=>[1.0e-3, 1.0e3],
 :ksnf1std1=> [1.0e-3, 1.0e3],
@@ -199,20 +208,33 @@ pars=[p[1]=>subss(log(p[2])) for p in parameters]
 :Mth1_0=> [0.0, 1.0e1],  
 :Std1_0=> [0.0, 1.0e1], 
 ]
+#from the above universal collection of bounds, make a local collection of bounds to match the parameters in the current model
+
+localbounds=[p[1]=> getvalue(bounds, p[1]) for p in parameters]
+
 
 #making (prior) distributions to sample parameters from, for which the parameter value is at the centre.
 #must replaced by something more sophisticated here!
-#pardistributions=[p[1] => Normal(p[2],1) for p in parameters]
+pardistributions=[p[1] => Normal(subss(p[2]),1) for p in pars]
 
-#making priori Uniform distributions to saple parameters from, based on the above bounds.
-pardistributions=[p[1] => Uniform(p[2][1],p[2][2]) for p in bounds]
+#making priori Uniform distributions to sample parameters from, based on the above bounds.
+#pardistributions=[p[1] => Uniform(p[2][1],p[2][2]) for p in localbounds]
 
 #taking a sample of the parameter distributions. 
+#vals=[]
+#for j in 1:100
 parsample=[d[1]=> rand(d[2])  for d in pardistributions]
 #broadcasting the parameters to all predefined systems and conditions, solving and evaluating the cost. 
 
+vals=trysolve.(allprobs,[parsample], [j(x) for j in splines], me2)
+
+
+#trying a hundred 
+vals=[]
+for j in 1:100
+parsample=[d[1]=> rand(d[2])  for d in pardistributions]
 #trying parsample sometimes sometimes gives reasonable values. trying pars provides a solvable parameter set.
 
-trysolve.(allprobs,[pars], [j(x) for j in splines],[repeat([1], length(x))]) 
+push!(vals, sum(trysolve.(allprobs,[parsample], [j(x) for j in splines],me2) ))
 
-
+end
