@@ -32,7 +32,10 @@ end
 function rgt2ko(params)
 	pars=OrderedDict(params)
 	pars[:dmth1rgt2] = 0.0
+	if :dstd1rgt2 in OrderedDict(parameters).keys
 	pars[:dstd1rgt2] = 0.0
+	end
+	pars[:k2]=100
 	collect(pars)
 end	
 function snf3ko(params)
