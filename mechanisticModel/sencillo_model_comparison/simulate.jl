@@ -48,6 +48,7 @@ end
 
 ###this function solves the problem but in a straightforward way. used to troubleshoot crashing parameters or situations.
 function solvedynamic(prob, pars, datamean, datastd)
+global interv
 sol= solve(prob(pars),ABDF2(), saveat=interv)
 arr=[[j[i] for j in sol.u] for i=1:length(sol.u[1])]
 #push!(finalarrs, arr[1])
@@ -63,11 +64,6 @@ subss(x)=  if !isfinite(x) return -30.0 else return x end
 #the mean  can be approximated by interpolation, 
 #but not the standard deviation. we need to  stick to the timepoints at which this was originally sampled.
 
-global interv= 0.0803212851405622  # 0.0803 #spacing to generate the right times comes from linspace(0, 20, 250)
-tims= repeat([interv], 229)
-x=cumsum(tims) #general time vector for matching simulation and data
-#x is the exact timepoints at which the means and standard deviations are originally sampled.
-#we use x for all the simulations henceforth.
 
 glucose=[8.32733959421089e-19,2.561481685921e-19,1.04197119608466e-19,5.53738039368354e-20,2.30389033029131e-20,1.01730601065369e-20,9.64607628015416e-21,4.54189858719156e-21,2.62590228463374e-21,1.07030601256657e-21,7.12893122193276e-22,3.77665654101745e-22,1.13613450886179e-22,9.11107194068206e-23,1.68345898188741e-23,4.59571704388656e-23,2.4737145794224e-23,5.06371909794061e-24,5.65818382020064e-24,1.04048279473923e-24,3.94925490074619e-24,3.45909892619726e-25,7.07762515569138e-25,7.59557441484042e-26,2.02035130943482e-27,3.27268072550391e-26,1.56537448533959e-27,1.6320588929363e-27,4.39103892339638e-28,4.80386219709977e-29,3.78228642078199e-28,6.7008774844888e-33,3.38770680654291e-30,3.11390728411053e-36,3.43524261389185e-36,9.0953685838273e-37,0,2.65814991285393e-16,1.40534785861741e-05,0.956449369761021,0.999932720540147,0.999988138202835,0.999994336997356,0.999995688515055,0.99999655799382,0.999997230933311,0.999997349602989,0.999997796320276,0.999997725777247,0.999997825419588,0.999997959294029,0.99999807290326,0.999998148682981,0.999998097810728,0.999998115954266,0.999998085169392,0.999998126522822,0.99999814575262,0.999998172022714,0.999998338656721,0.999998383673738,0.999998504114664,0.999998515535666,0.999998447595621,0.999998528661984,0.99999855188616,0.999998519653104,0.999998565797203,0.999998565177499,0.999998598958849,0.999998669110336,0.999998719774422,0.999998776796943,0.999998794501031,0.99999883534008,0.999998798817409,0.99999880270023,0.999998808299886,0.999998809973147,0.999998846846304,0.999998882337051,0.999998957349787,0.999998958954537,0.999998984982437,0.999998977466028,0.999998955080815,0.999998965848435,0.999998965848435,0.999998955080815,0.999998977466028,0.999998984982437,0.999998958954537,0.999998957349787,0.999998882337051,0.999998846846304,0.999998809973147,0.999998808299886,0.99999880270023,0.999998798817409,0.99999883534008,0.999998794501031,0.999998776796943,0.999998719774422,0.999998669110336,0.999998598958849,0.999998565177499,0.999998565797203,0.999998519653104,0.99999855188616,0.999998528661984,0.999998447595621,0.999998515535666,0.999998504114664,0.999998383673738,0.999998338656721,0.999998172022714,0.99999814575262,0.999998126522822,0.999998085169392,0.999998115954266,0.999998097810728,0.999998148682981,0.99999807290326,0.999997959294029,0.999997825419588,0.999997725777247,0.999997796320276,0.999997349602989,0.999997230933311,0.99999655799382,0.999995688515055,0.999994336997356,0.999988138202835,0.999932720540147,0.956449369761021,1.40534785861741e-05,2.65814991285393e-16,0,9.0953685838273e-37,3.43524261389185e-36,3.11390728411053e-36,3.38770680654291e-30,6.7008774844888e-33,3.78228642078199e-28,4.80386219709977e-29,4.39103892339638e-28,1.6320588929363e-27,1.56537448533959e-27,3.27268072550391e-26,2.02035130943482e-27,7.59557441484042e-26,7.07762515569138e-25,3.45909892619726e-25,3.94925490074619e-24,1.04048279473923e-24,5.65818382020064e-24,5.06371909794061e-24,2.4737145794224e-23,4.59571704388656e-23,1.68345898188741e-23,9.11107194068206e-23,1.13613450886179e-22,3.77665654101745e-22,7.12893122193276e-22,1.07030601256657e-21,2.62590228463374e-21,4.54189858719156e-21,9.64607628015416e-21,1.01730601065369e-20,2.30389033029131e-20,5.53738039368354e-20,1.04197119608466e-19,2.561481685921e-19,8.32733959421089e-19,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 #making sure the shape of the above is right
@@ -90,8 +86,8 @@ celldata=JSON.parsefile("./json/hxtmeandata.json", dicttype=Dict)
 =#
 datameans=JSON.parsefile("./json/allfitmeans.json", dicttype=Dict)
 #ordering the data so that each entry is one phenotype
-dm2=[[datameans[j][k] for j in 1:size(datameans)[1]] for k in 1:size(datameans[1])[1]]
-
+#dm2=[[datameans[j][k] for j in 1:size(datameans)[1]] for k in 1:size(datameans[1])[1]]
+dm2=datameans
 
 
 subsd(x)=  if typeof(x)==String return 1000 else return x end # if it is a string(missing value) return a st of 1000  to minimise the relevance of this point.
@@ -99,7 +95,7 @@ subzero(x)=  if x==0 return 1 else return x end # if it is 0, return 1  in order
 
 meanerr=JSON.parsefile("./json/meanerr.json", dicttype=Dict)#doesn't need ordering 
 
-me2=[subzero.(subsd.(j)) for j in datastd]
+me2=[subzero.(subsd.(j)) for j in meanerr]
 
 
 stdmeans=JSON.parsefile("./json/stdmeans.json", dicttype=Dict)#doesn't need ordering 
@@ -107,7 +103,13 @@ stdmeans=JSON.parsefile("./json/stdmeans.json", dicttype=Dict)#doesn't need orde
 sm2=[subzero.(subsd.(j)) for j in stdmeans]
 
 
+global interv= 0.044543429844097995; # 0.0445... for 450 datapoints   #0.05730659025787966   #0.0573... for 350 datapoints  # 0.0803212851405622  # 0.0803 #spacing to generate the right times comes from linspace(0, 20, 250)
 
+nsteps=convert(Int64, ceil(18.39/interv))
+tims= repeat([interv], nsteps)
+x=cumsum(tims) #general time vector for matching simulation and data
+#x is the exact timepoints at which the means and standard deviations are originally sampled.
+#we use x for all the simulations henceforth.
 
 
 #Data means for 18 conditions
@@ -120,9 +122,10 @@ subs(x)=  if typeof(x)==String return missing else return x end
 global splines=Array{Spline1D}(undef, (18)) #making splines for original data
 for j in 1:18
 if j==7
-splines[j]=Spline1D(tim[ findall(.!ismissing.([subs(x) for x in dm2[j][1:229]]))], dm2[j][ findall(.!ismissing.([subs(x) for x in dm2[j][1:229]]))])
+points=findall(.!ismissing.([subs(x) for x in dm2[j][1:nsteps]]))#not nan points
+splines[j]=Spline1D(x[ points], dm2[j][ points])
 else
-splines[j]=Spline1D(tim[1:229], dm2[j][1:229])
+splines[j]=Spline1D(x[1:nsteps], dm2[j][1:nsteps])
 end
 end
 
@@ -141,7 +144,7 @@ concs=repeat([0.2, 0.4, 1], 6) # glucose concentrations  in the order given by d
 modelfile="./mechanisticModel/sencillo_model_comparison/hxt4model3d.jl"
 
 #making array of problems ready to receive parameter sets
-allprobs=makeproblem.([modelfile], [x], [y], concs, [tt], genotypes)
+allprobs=makeproblem.([modelfile], [tim[1:229]], [y], concs, [tt], genotypes)
 
 #taking the log of the parameters and capping the zeros to -30
 pars=[p[1]=>subss(log(p[2])) for p in parameters]
@@ -231,10 +234,22 @@ vals=trysolve.(allprobs,[parsample], [j(x) for j in splines], me2)
 
 #trying a hundred 
 vals=[]
-for j in 1:100
+for j in 1:1000
 parsample=[d[1]=> rand(d[2])  for d in pardistributions]
 #trying parsample sometimes sometimes gives reasonable values. trying pars provides a solvable parameter set.
 
 push!(vals, sum(trysolve.(allprobs,[parsample], [j(x) for j in splines],me2) ))
 
 end
+
+
+
+
+function solveall(params)
+
+sum(trysolve.(allprobs,[params], [j(x) for j in splines],me2))
+
+
+end
+
+

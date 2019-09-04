@@ -35,7 +35,7 @@ function rgt2ko(params)
 	if :dstd1rgt2 in OrderedDict(parameters).keys
 	pars[:dstd1rgt2] = 0.0
 	end
-	pars[:k2]=100
+	pars[:k2]=10
 	collect(pars)
 end	
 function snf3ko(params)
@@ -44,4 +44,18 @@ function snf3ko(params)
 	pars[:dstdtsnf3] = 0.0
 	collect(pars)
 end	
+
+
+function makehxt4(params, 1)
+	pars=OrderedDict(params)
+	pars[:dmth1snf3] = 0.0
+	pars[:dstdtsnf3] = 0.0
+	collect(pars)
+end	
+
+
+
+
+
+
 
