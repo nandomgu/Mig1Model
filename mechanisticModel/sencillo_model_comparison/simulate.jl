@@ -1,7 +1,5 @@
 using JSON
 using Distributions
-#script assumes you are at the root of the Mig1Model repository
-cd("/Users/s1259407/Dropbox/PhD/phd_peter_swain/data/plate_reader_data/PythonScripts/Mig1Model/")
 #file thad describes all the modifications of parameters for each genotype.
 include("./mechanisticModel/sencillo_model_comparison/genotypes.jl")
 
@@ -99,7 +97,7 @@ subzero(x)=  if x==0 return 1 else return x end # if it is 0, return 1  in order
 
 meanerr=JSON.parsefile("./json/meanerr.json", dicttype=Dict)#doesn't need ordering 
 
-me2=[subzero.(subsd.(j)) for j in datastd]
+me2=[subzero.(subsd.(j)) for j in datastd] #issue with this line - what is datastd?
 
 
 stdmeans=JSON.parsefile("./json/stdmeans.json", dicttype=Dict)#doesn't need ordering 
@@ -119,11 +117,11 @@ subs(x)=  if typeof(x)==String return missing else return x end
 
 global splines=Array{Spline1D}(undef, (18)) #making splines for original data
 for j in 1:18
-if j==7
-splines[j]=Spline1D(tim[ findall(.!ismissing.([subs(x) for x in dm2[j][1:229]]))], dm2[j][ findall(.!ismissing.([subs(x) for x in dm2[j][1:229]]))])
-else
-splines[j]=Spline1D(tim[1:229], dm2[j][1:229])
-end
+	if j==7
+	splines[j]=Spline1D(tim[ findall(.!ismissing.([subs(x) for x in dm2[j][1:229]]))], dm2[j][ findall(.!ismissing.([subs(x) for x in dm2[j][1:229]]))])
+		else
+	splines[j]=Spline1D(tim[1:229], dm2[j][1:229])
+	end
 end
 
 

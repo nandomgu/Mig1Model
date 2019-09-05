@@ -1,5 +1,3 @@
-using DifferentialEquations
-
 function model(dydt, y, parameters, t)
 
 	g=input(t)
