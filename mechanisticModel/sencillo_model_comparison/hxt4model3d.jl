@@ -23,7 +23,7 @@ function model(dydt, y, parameters, t)
 	istd1= parameters[19]
 	nstd1= parameters[20]
 	estd1max= parameters[21]
-	mig1tot= parameters[22]
+	mig1tot= 1.0
 	imig1= parameters[23]
 	kmig1snf1= parameters[24]
 	emig1max= parameters[25]

@@ -4,7 +4,7 @@ function wt(params)
    	params
 end
 
-include("./mechanisticModel/sencillo_model_comparison/genotypes.jl")
+include("/home/msturrock/Desktop/Mig1/Mig1Model/mechanisticModel/sencillo_model_comparison/genotypes.jl")
 
 #getvalue(pars, key) = [p[2] for p in pars if p[1] == key][1]
 
