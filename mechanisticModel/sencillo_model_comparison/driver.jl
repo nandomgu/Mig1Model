@@ -17,5 +17,5 @@ function makeproblem(modelfile, inputx, inputy, concentration, t,hxt40, genotype
     include(modelfile)
 
 #OUTPUTING A FUNCTION THAT GENERATES A PROBLEM AS A FUNCTION OF ONLY PARAMETERS.
-    prob(params) = ODEProblem(model, [hxt40;exp.(params[45:48])], t, [exp(j) for j in genotype(params)])
+    prob(params) = ODEProblem(model, [hxt40;params[45:48]], t, [exp(j) for j in genotype(params)])
 end

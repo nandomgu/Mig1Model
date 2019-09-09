@@ -34,8 +34,8 @@ end
 
 function rgt2ko(params)
   	 pars = copy(params)
-   	pars[12] = log(0.0)
-   	pars[2] = log(100.0) #should this be another parameter?
+   	 pars[12] = log(0.0)
+   	 pars[2] = log(10.0) #should this be another parameter?
    	return collect(pars)
 end	
 
