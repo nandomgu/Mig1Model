@@ -116,20 +116,25 @@ bounds=[
     :khxt4mth1std1=>  [1.0e-3, 1.0e3],
     :nhxt4mth1std1=> [1.0, 10.0]]
     #Not exactly sure about what bounds to use for initial conditions.  doing form 0 to 10 in mig1 units.
-    bounds2 = [:Mig1_0=> [0.0, 1.0e1],  
+    bounds2 = [:Mig1_0=> [0.0, 0.1],  
     :Mig2_0=> [0.0, 1.0e1], 
     :Mth1_0=> [0.0, 1.0e1],  
     :Std1_0=> [0.0, 1.0e1]]
 
 pardistributions = [[Uniform(log(p[2][1]), log(p[2][2])) for p in bounds]; [Uniform(p2[2][1],p2[2][2]) for p2 in bounds2]]
 
-np = 1000 # change the number of particles
+np = 2000 # change the number of particles
 
 @time apmc_output =APMC_KDE(np,0.0,[pardistributions],[rho_lens],paccmin=0.01)
 
 #plot best parameter set
 d2 = apmc_output.pts[end][1:48,1]
 d3 = apmc_output.pts[end][1:48,:]
+
+d2 = zeros(48)
+for i in 1:48
+    d2[i] = mode(apmc_output.pts[end][i,1])
+end
 
 using Plots
 d2 = rand(pardistributions)
