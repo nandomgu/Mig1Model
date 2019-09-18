@@ -527,7 +527,7 @@ class sencillo:
             tupler=')'
 
             # define parameters
-            out.write('using Dierckx\nUsing DifferentialEquations\n\using DataStructures\n\n')
+            out.write('using Dierckx\nusing DifferentialEquations\nusing DataStructures\n\n')
             out.write('function wt(params)\n\tparams\nend\n\n')
             out.write(commt + ' parameters\n')
             outstring= ''
