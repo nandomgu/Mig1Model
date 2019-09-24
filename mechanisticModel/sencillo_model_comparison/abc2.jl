@@ -166,10 +166,7 @@ function APMC(N,expd,models,rho,;names=Vector[[string("parameter",i) for i in 1:
     p[:,i]=p[:,i]./sum(p[:,i])
     for j in 1:lm
       nbs[j]=length(wts[j,i])
-      println(round.(hcat(mean(diag(sig[j,i])./diag(sig[j,1])),pacc[j,i],nbs[j],p[j,i],minimum(dists)),digits=3))
-      if length(pts[j,i]) > 0
-        println(pts[j,i][:,1])
-      end
+      println(round.(hcat(mean(diag(sig[j,i])./diag(sig[j,1])),pacc[j,i],nbs[j],p[j,i]),digits=3))
     end
   end
   samp=ABCfit(pts,sig,wts,p,its,dists,epsilon,temp,pacc,names,models)

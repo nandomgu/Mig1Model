@@ -6,41 +6,41 @@ end
  
 function mth1ko(params)
  pars = copy(params)
-	pars[13] = log(0.0)
-	pars[47] = log(0.0)
+	pars[13] = 0.0
+	pars[47] = 0.0
 	return collect(pars)
 end
  
 function std1ko(params)
  pars = copy(params)
-	pars[18] = log(0.0)
-	pars[48] = log(0.0)
+	pars[18] = 0.0
+	pars[48] = 0.0
 	return collect(pars)
 end	
 
 function mig2ko(params)
  pars = copy(params)
-	pars[29] = log(0.0)
- pars[46] = log(0.0)
+	pars[29] = 0.0
+ pars[46] = 0.0
  return collect(pars)
 end	
 
 function mig1ko(params)
  pars = copy(params)
-	pars[22] = log(0.0)
- pars[45] = log(0.0)
+	pars[22] = 0.0
+ pars[45] = 0.0
  return collect(pars)
 end	
 
 function rgt2ko(params)
  pars = copy(params)
- pars[12] = log(0.0)
- pars[2] = log(100.0) #should this be another parameter?
+ pars[12] = 0.0
+ pars[2] = 100.0 #should this be another parameter?
  return collect(pars)
 end	
 
 function snf3ko(params)
  pars = copy(params)
- pars[11] = log(0.0)
+ pars[11] = 0.0
  return collect(pars)
 end

@@ -1,5 +1,5 @@
 using Distributed #- can parallelise code here by adding extra cores...
-addprocs(1)
+addprocs(22)
 @everywhere begin
     using StatsBase, KernelDensity, Random
     using Distances, Distributions, DataStructures
@@ -49,7 +49,7 @@ addprocs(1)
                arr = [[j[i] for j in sol.u] for i = 1:length(sol.u[1])]
                lsqval = sum(((arr[1] - datamean) / datastd).^2)
         catch
-                lsqval = 10000.0
+                lsqval = 1000.0
         end
     end
 
@@ -68,67 +68,16 @@ addprocs(1)
 
 end
 
-bounds=[
-    :k3=>[1.0e-3, 1.0e3],
-    :k2=> [1.0e-3, 1.0e3],
-    :ksnf1=>[1.0e-3, 1.0e3],
-    :ksnf1std1=> [1.0e-3, 1.0e3],
-    :nsnf1=>[1.0, 10.0],
-    :nsnf2=>[1.0, 10.0],
-    :Snf1tot=> [0.1, 1.0e2], #10 times less than mig1 or 100 times more.
-    :dmth1=>  [0.1, 2.5e3],
-    :nmth1snf3=> [1.0, 10.0],
-    :nmth1rgt2=> [1.0, 10.0],
-    :dmth1snf3=> [0.1, 2.5e3],
-    :dmth1rgt2=>  [0.1, 2.5e3], 
-    :smth1=> [1.0e-3, 120],
-    :kmig1mth1=>  [1.0e-3, 1.0e3],
-    :nmig1mth1=> [1.0, 10.0],
-    :kmig2mth1=>  [1.0e-3, 1.0e3],
-    :nmig2mth1=> [1.0, 10.0],
-    :std1tot=> [0.1, 1.0e3],
-    :istd1=> [0.1, 2.5e4],
-    :nstd1=> [1.0, 10.0],
-    :estd1max=>[0.1, 2.5e4],
-    :mig1tot=> [.9999999999,1], 
-    :imig1=> [0.1, 2.5e4] ,
-    :kmig1snf1=>  [1.0e-3, 1.0e3],
-    :emig1max=>[0.1, 2.5e4],
-    :dmig2=>  [0.1, 2.5e3],
-    :dmig2snf1=>  [0.1, 2.5e3],
-    :kmig2snf1=>   [1.0e-3, 1.0e3],
-    :smig2=>[1.0e-3, 120],
-    :kmig2std1=>  [1.0e-3, 1.0e3],
-    :nmig2std1=>[1.0, 10.0],
-    :kmig2mth1std1=>  [1.0e-3, 1.0e3],
-    :nmig2mth1std1=> [1.0, 10.0],
-    :dhxt4=>  [0.1, 2.5e3],
-    :dhxt4max=> [0.1, 2.5e3],
-    :kdhxt4=>  [1.0e-3, 1.0e3],
-    :ndhxt4=> [1.0, 10.0],
-    :shxt4=> [1.0e-3, 120], 
-    :khxt4mth1=> [1.0e-3, 1.0e3],
-    :nhxt4mth1=> [1.0, 10.0],
-    :khxt4std1=>  [1.0e-3, 1.0e3], 
-    :nhxt4std1=>[1.0, 10.0],
-    :khxt4mth1std1=>  [1.0e-3, 1.0e3],
-    :nhxt4mth1std1=> [1.0, 10.0]]
-    #Not exactly sure about what bounds to use for initial conditions.  doing form 0 to 10 in mig1 units.
-    bounds2 = [:Mig1_0=> [0.0, 0.1],  
-    :Mig2_0=> [0.0, 1.0e1], 
-    :Mth1_0=> [0.0, 1.0e1],  
-    :Std1_0=> [0.0, 1.0e1]]
+A = Uniform(-6,5)
+model_lens = repeat([A];outer=[51])
+np = 1000 # change the number of particles
 
-pardistributions = [[Uniform(log(p[2][1]), log(p[2][2])) for p in bounds]; [Uniform(p2[2][1],p2[2][2]) for p2 in bounds2]]
-
-np = 3000 # change the number of particles
-
-@time apmc_output =APMC_KDE(np,0.0,[pardistributions],[rho_lens],paccmin=0.01)
+@time apmc_output =APMC_KDE(np,0.0,[model_lens],[rho_lens],paccmin=0.01)
 
 #plot best parameter set
-d2 = apmc_output.pts[end][1:48,1]
-d3 = apmc_output.pts[end][1:48,:]
-
+d2 = apmc_output.pts[end][1:53,1]
+d3 = apmc_output.pts[end][1:53,:]
+d2 = [-1.99995, 1.06211, -5.13512, 4.67567, 5.01806, -1.84446, 5.73796, -2.87079, 0.0698773, 0.288116, 0.376694, 3.14651, -4.50517, -0.379322, 5.25098, 0.560657, -1.74271, -0.245076, 1.22922, 0.746876, 4.85039, 5.45447, -2.80427, -0.264936, 3.03049, 5.25449, 5.86184, 2.28341, 5.81895, 1.63477, 2.87004, 2.80064, -1.15641, -2.48345, -3.90747, -4.58572, 1.46517, -4.65211, 3.03817, 0.611965, 1.35178, 6.74873, -0.211267, -1.23877, -2.57697, 1.36639, 2.07541, -100.0, -100.0, -4.54752, 5.57239]
 d2 = zeros(48)
 for i in 1:48
     d2[i] = mode(apmc_output.pts[end][i,1])
@@ -137,25 +86,7 @@ end
 using Plots
 d2 = rand(pardistributions)
 
-inspectdr(grid=false,linewidth=3.0,ylabel="HXT4",labels=["model" "data"])
-p=[]
-for i = 1:18
-    sol = solve(allprobs[i](d2), Rosenbrock32(autodiff=false), d_discontinuities=[3.16,3.25,3.33,11.25,11.33,11.42], saveat = interv,verbose=false)
-    push!(p,plot(x,[sol[1,:] splines[i](x)],xlabel="time",title="condition $i"))
-end
 
-plot(p[1:18]...,layout=(6,3),size=(1000,1000))
-savefig("sampleoutput_hxt4.png")
-
-inspectdr(grid=false,linewidth=3.0,ylabel="mig1")
-p=[]
-for i = 1:18
-    sol = solve(allprobs[i](d2),Rosenbrock32(autodiff=false),d_discontinuities=[3.16,3.25,3.33,11.25,11.33,11.42], saveat = interv,verbose=false)
-    push!(p,plot(x,sol[2,:],label=["model" "data"],xlabel="time",title="condition $i"))
-end
-
-plot(p[1:18]...,layout=(6,3),size=(1000,1000))
-savefig("sampleoutput_mig1.png")
 
 gr(ylabel="frequency",label="",xlabel="parameter value")
 anim = @animate for i = 1:48
@@ -173,27 +104,71 @@ out=10000 .* ones(100)
 pars = []
 for i = 1:100
     @show i
-    parsample = rand(pardistributions)
-    out[i]=sum(trysolve.(allprobs,[parsample], [j(x) for j in splines],me2))
+    d2 = rand(model_lens)
+    out[i]=sum(trysolve.(allprobs,[d2], [j(x) for j in splines],me2))
     if out[i] <= minimum(out)
-       global pars = parsample
+       global pars = d2
     end
 end
+findall(out.<10000)
 
-
-d2 = pars
+d2 = rand(pardistributions)
 using Plots
 inspectdr(grid=false,linewidth=3.0,ylabel="HXT4")
 p=[]
 for i = 1:18
     @show i
-    sol = solve(allprobs[i](d2), CVODE_BDF(), saveat = interv,verbose=true,abstol=1e-12,reltol=1e-12)
+    sol = solve(allprobs[i](d2), CVODE_BDF(), saveat = interv,verbose=true,abstol=1e-15,reltol=1e-15)
     push!(p,plot([sol[1,:] splines[i](x)],label=["model" "data"],xlabel="time",title="condition $i"))
 end
 plot(p[1:18]...,layout=(6,3),size=(1000,1000))
-savefig("sampleoutput.png")
+savefig("sampleoutput_with_g.png")
 
 
 function glucose2(t,a,b,c,n)
     return a.*exp.((-(t.-b).^n)./n*c.^n)
 end
+
+
+inspectdr(grid=false,linewidth=3.0,ylabel="mig1")
+p=[]
+for i = 1:18
+     sol = solve(allprobs[i](d2), CVODE_BDF(), saveat = interv,verbose=true,abstol=1e-12,reltol=1e-12)
+     push!(p,plot([sol[2,:]],label="model",xlabel="time",title="condition $i"))
+end
+plot(p[1:18]...,layout=(6,3),size=(1000,1000))
+savefig("sampleoutputmig1.png")
+
+inspectdr(grid=false,linewidth=3.0,ylabel="mig2")
+p=[]
+for i = 1:18
+     sol = solve(allprobs[i](d2), CVODE_BDF(), saveat = interv,verbose=true,abstol=1e-15,reltol=1e-15)
+     push!(p,plot([sol[3,:]],label="model",xlabel="time",title="condition $i"))
+end
+plot(p[1:18]...,layout=(6,3),size=(1000,1000))
+savefig("sampleoutputmig2.png")
+
+inspectdr(grid=false,linewidth=3.0,ylabel="mth1")
+p=[]
+for i = 1:18
+     sol = solve(allprobs[i](d2), CVODE_BDF(), saveat = interv,verbose=true,abstol=1e-15,reltol=1e-15)
+     push!(p,plot([sol[4,:]],label="model",xlabel="time",title="condition $i"))
+end
+plot(p[1:18]...,layout=(6,3),size=(1000,1000))
+savefig("sampleoutputmth1.png")
+
+inspectdr(grid=false,linewidth=3.0,ylabel="Std1")
+p=[]
+for i = 1:18
+     sol = solve(allprobs[i](d2), CVODE_BDF(), saveat = interv,verbose=true,abstol=1e-15,reltol=1e-15)
+     push!(p,plot([sol[5,:]],label="model",xlabel="time",title="condition $i"))
+end
+plot(p[1:18]...,layout=(6,3),size=(1000,1000))
+savefig("sampleoutputStd1.png")
+
+
+gr(ylabel="frequency",label="",xlabel="parameter value")
+anim = @animate for i = 1:48
+    histogram(d3[i,:],title="parameter $i",xlims=(-10,5))
+end
+gif(anim,"posteriors.gif",fps=1)
