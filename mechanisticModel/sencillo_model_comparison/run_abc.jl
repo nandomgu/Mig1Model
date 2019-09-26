@@ -1,5 +1,5 @@
 using Distributed #- can parallelise code here by adding extra cores...
-addprocs(22)
+addprocs(20)
 @everywhere begin
     using StatsBase, KernelDensity, Random
     using Distances, Distributions, DataStructures
@@ -68,14 +68,67 @@ addprocs(22)
 
 end
 
-A = Uniform(-6,5)
-model_lens = repeat([A];outer=[51])
-np = 1000 # change the number of particles
+custombounds=
+[(-7.30259,2.69741),
+(-5.51083,4.48917),
+(-7.99573,2.00427),
+(0.0751738,10.0752),
+(-2.92056,7.07944),
+(-2.92056,7.07944),
+(-0.212508,9.78749),
+(-6.20397,3.79603),
+(-4.81768,5.18232),
+(-4.66353,5.33647),
+(-3.61371,6.38629),
+(-4.30685,5.69315),
+(-5.0,5.0),
+(-6.60944,3.39056),
+(-4.73764,5.26236),
+(-2.51509,7.48491),
+(-4.73764,5.26236),
+(-4.25806,5.74194),
+(-3.61371,6.38629),
+(-3.90139,6.09861),
+(-3.8686,6.1314),
+(-2.80278,7.19722),
+(-3.90139,6.09861),
+(-3.05409,6.94591),
+(-6.20397,3.79603),
+(-4.25806,5.74194),
+(-4.12453,5.87547),
+(-5.69315,4.30685),
+(-4.95121,5.04879),
+(-4.25806,5.74194),
+(-6.20397,3.79603),
+(-4.81768,5.18232),
+(-8.50656,1.49344),
+(-4.25806,5.74194),
+(-4.12453,5.87547),
+(-5.0,5.0),
+(-2.00427,7.99573),
+(-5.69315,4.30685),
+(-3.90139,6.09861),
+(-4.95121,5.04879),
+(-4.25806,5.74194),
+(-6.20397,3.79603),
+(-4.81768,5.18232),
+(-4.30685,5.69315),
+(-5.0,5.0),
+(-4.59453,5.40547),
+(-4.30685,5.69315),
+(-10.0,10.0),
+(-10.0,10.0),
+(-10.0,10.0),
+(-10.0,10.0)]
 
+model_lens = [Uniform(p[1],p[2]) for p in custombounds]
+
+
+np = 2000 # change the number of particles
 @time apmc_output =APMC_KDE(np,0.0,[model_lens],[rho_lens],paccmin=0.01)
 
 #plot best parameter set
-d2 = apmc_output.pts[end][1:53,1]
+d2 = apmc_output.pts[end][1:51,1]
 d3 = apmc_output.pts[end][1:53,:]
 d2 = [-1.99995, 1.06211, -5.13512, 4.67567, 5.01806, -1.84446, 5.73796, -2.87079, 0.0698773, 0.288116, 0.376694, 3.14651, -4.50517, -0.379322, 5.25098, 0.560657, -1.74271, -0.245076, 1.22922, 0.746876, 4.85039, 5.45447, -2.80427, -0.264936, 3.03049, 5.25449, 5.86184, 2.28341, 5.81895, 1.63477, 2.87004, 2.80064, -1.15641, -2.48345, -3.90747, -4.58572, 1.46517, -4.65211, 3.03817, 0.611965, 1.35178, 6.74873, -0.211267, -1.23877, -2.57697, 1.36639, 2.07541, -100.0, -100.0, -4.54752, 5.57239]
 d2 = zeros(48)
@@ -172,3 +225,15 @@ anim = @animate for i = 1:48
     histogram(d3[i,:],title="parameter $i",xlims=(-10,5))
 end
 gif(anim,"posteriors.gif",fps=1)
+
+
+using BlackBoxOptim
+function solveall(d2)
+    error = sum(trysolve.(allprobs,[d2], [j(x) for j in splines],me2))
+    if isnan(error) || isinf(error) 
+        error = 10000.0
+    end
+    return error
+end
+opts7=bbsetup(solveall; Method = :adaptive_de_rand_1_bin_radiuslimited, SearchRange = custombounds, NumDimensions = 51, MaxSteps = 100000)
+res7=bboptimize(opts7, MaxSteps=100000)
