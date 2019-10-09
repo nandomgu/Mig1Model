@@ -386,12 +386,11 @@ class sencillo:
             delimr= ')'
             stp= ';'
             inc= 1
-        elif otype== 'julia':
+        elif otype== 'julia' or otype=='juliadynamic':
             deliml= '['
             delimr= ']'
             stp=''
             inc=1
-
         # define the vector of rates
         c= 0
         for rname in r.keys():
@@ -409,12 +408,15 @@ class sencillo:
 #            # define y as a vector of species
         for (c, sname) in enumerate(self.alphspecies):
             out.write('\t' + sname + '= y' + deliml + str(c+inc) + delimr + stp + '\n')
+            numpars=len(self.parameters)
+        if otype=='juliadynamic':
+            out.write('\ty['+str(len(self.alphspecies)+1)+']=g\n')
         out.write('\n')
             # print any variables
         for var in v.keys():
             if otype == 'python':
                 out.write('\t' + var + '= ' + v[var]['value'].replace('^', '**') + stp + '\n')
-            elif (otype == 'matlab') | (otype == 'julia'):
+            elif (otype == 'matlab') | (otype == 'julia')| (otype == 'juliadynamic'):
                 out.write('\t' + var + '= ' + v[var]['value'] + stp + '\n')
                 out.write('\n')
                 # print the differential equations
@@ -427,10 +429,11 @@ class sencillo:
                 out.write('\tdydt' + deliml + str(c+inc) + delimr + '= ' \
                           + s[sname]['birth'].replace('^', '**') \
                           + s[sname]['death'].replace('^', '**') + stp + '\n')
-            elif (otype == 'matlab') | (otype == 'julia'):
+            elif (otype == 'matlab') | (otype == 'julia')| (otype == 'juliadynamic'):
                 out.write('\tdydt' + deliml + str(c+inc) + delimr + '= ' \
                           + s[sname]['birth'] + s[sname]['death'] + stp + '\n')
-
+        if otype=='juliadynamic':
+            out.write('\tdydt' + deliml + str(len(self.alphspecies)+inc) + delimr + '= 0.0' + stp + '\n')
 
     #####
     def printdriver(self, out, otype):
@@ -667,13 +670,13 @@ class sencillo:
         #out.write('using DifferentialEquations\nusing DataStructures\nusing Dierckx')
 
         # function for odeint
-        out.write('function ' + 'model' + '(dydt, y, parameters, t)\n')
+        out.write('function makeproblem(modelfile, inputx,inputy, concentration, t, h0, genotype=wt)\n#making a general spline for every purpose\ninput = Spline1D(inputx,inputy*concentration; k=1)\n#SYSTEM OF ODES WITH A TIME VARYING INPUT\nfunction modeli(input)function ' + 'model' + '(dydt, y, parameters, t)\n')
         if len(self.inputs)==1:
         	out.write('\n\t'+self.inputs[0]+'=input(t)\n')
         else:
             for j in range(0, len(self.inputs)):
                 out.write('\n'+self.inputs[j]+'=input['+str(j+1)+'](t)\n')
-        self.printodes(out, 'julia')
+        self.printodes(out, 'juliadynamic')
         # out.write('\n\treturn dydt\n')
         out.write('end\n')
         #         driver code
