@@ -595,7 +595,7 @@ push!(completepars, pars5d[j][1]=> getvalue(pars5d,  pars5d[j][1]))
 end
 end
 
-con=3
+conc=3
 logpars=[p[1]=>log(p[2]) for p in completepars]
 pp2=solveplotnew(allprobs[conc], logpars, dm2[1][1:length(x)],me2[1][1:length(x)], 2)
 pp3=solveplotnew(allprobs[conc], logpars, dm2[1][1:length(x)],me2[1][1:length(x)], 3)
@@ -605,3 +605,9 @@ pp6=solveplotnew(allprobs[conc], logpars, dm2[1][1:length(x)],me2[1][1:length(x)
 pp1=solveplotnew(allprobs[conc], logpars, dm2[1][1:length(x)],me2[1][1:length(x)], 1)
 plot(pp2,pp3, pp4,pp5, pp6,pp1, layout=(3, 2), ylim=[0,5])
 
+##
+##best fit parameters for model hxtmodel5d
+bestpars6=[-1.99995, 1.06211, -5.13512, 4.67567, 5.01806, -1.84446, 5.73796, -2.87079, 0.0698773, 0.288116, 0.376694, 3.14651, -4.50517, -0.379322, 5.25098, 0.560657, -1.74271, -0.245076, 1.22922, 0.746876, 4.85039, 5.45447, -2.80427, -0.264936, 3.03049, 5.25449, 5.86184, 2.28341, 5.81895, 1.63477, 2.87004, 2.80064, -1.15641, -2.48345, -3.90747, -4.58572, 1.46517, -4.65211, 3.03817, 0.611965, 1.35178, 6.74873, -0.211267, -1.23877, -2.57697, 1.36639, 2.07541, -100.0, -100.0, -100.0, -4.54752, 5.57239]
+
+
+bfpairs6=[pars5d[j][1]=> bestpars6[j] for j in 1:length(pars5d)]

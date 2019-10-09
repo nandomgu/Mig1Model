@@ -1,5 +1,7 @@
 using Dierckx
-Using DifferentialEquations
+using DifferentialEquations
+using DataStructures
+
 function wt(params)
 	params
 end
@@ -27,7 +29,6 @@ parameters= [
 :istd1=> 3.4, 
 :nstd1=> 1.5, 
 :estd1max=> 3.1, 
-:mig1tot=> 1, 
 :imig1=> 3.4, 
 :kmig1snf1=> 0.8, 
 :emig1max=> 3.1, 
@@ -50,6 +51,10 @@ parameters= [
 :nhxt4std1=> 2.1, 
 :khxt4mth1std1=> 0.3, 
 :nhxt4mth1std1=> 1.2, 
+:khxt4mig1=> .5, 
+:khxt4mig2=> 1, 
+:nhxt4mig1=> 1.5, 
+:nhxt4mig2=> 2, 
 :Hxt4_0=> 0, 
 :Mig1_0=> 0, 
 :Mig2_0=> 0, 
