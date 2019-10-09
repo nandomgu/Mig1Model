@@ -29,7 +29,6 @@ parameters= [
 :istd1=> 3.4, 
 :nstd1=> 1.5, 
 :estd1max=> 3.1, 
-:mig1tot=> 1, 
 :imig1=> 3.4, 
 :kmig1snf1=> 0.8, 
 :emig1max=> 3.1, 

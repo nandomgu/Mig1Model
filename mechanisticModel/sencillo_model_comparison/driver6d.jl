@@ -28,7 +28,6 @@ parameters= [
 :std1tot=> 2.1, 
 :istd1=> 3.4, 
 :nstd1=> 1.5, 
-:nstd3=> 1.5, 
 :estd1max=> 3.1, 
 :imig1=> 3.4, 
 :kmig1snf1=> 0.8, 
@@ -48,7 +47,7 @@ parameters= [
 :shxt4=> 0.5, 
 :khxt4mth1=> 12, 
 :nhxt4mth1=> 1.3, 
-:khxt4std1=> std1tot/2, 
+:khxt4std1=> 2.1/2, 
 :nhxt4std1=> 2.1, 
 :khxt4mth1std1=> 0.3, 
 :nhxt4mth1std1=> 1.2, 
@@ -59,8 +58,8 @@ parameters= [
 :Hxt4_0=> 0, 
 :Mig1_0=> 0, 
 :Mig2_0=> 0, 
-:Mth1_0=> smth1/dmth1, 
-:Std1_0=> std1tot, 
+:Mth1_0=> 0.3/0.3, 
+:Std1_0=> 2.1, 
 ]
 
 
