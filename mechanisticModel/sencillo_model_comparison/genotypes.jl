@@ -36,12 +36,12 @@ function rgt2ko(params)
 	if :dstd1rgt2 in OrderedDict(params).keys
 	pars[:dstd1rgt2] =log(0.0)
 	end
-	pars[:k2]=log(10)
+	pars[:k2]=pars[:mutk2]
 	collect(pars)
 end	
 function snf3ko(params)
 	pars=OrderedDict(params)
-	pars[:dmth1snf3] = log(0.0)
+	pars[:dmth1snf3] = pars[:mutk3]
 	pars[:k3] = log(10) #introduced in hxt4model6
 	collect(pars)
 end	

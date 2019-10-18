@@ -1,3 +1,4 @@
+using JLD2
 using JSON
 using Distributions
 using Sundials
@@ -226,6 +227,9 @@ bestpars6=[-1.99995, 1.06211, -5.13512, 4.67567, 5.01806, -1.84446, 5.73796, -2.
 
 bfpairs6=[completepars[j][1]=> bestpars6[j] for j in 1:length(completepars)]
 
+bfpairs7=[bfpairs6[1:20]..., :nstd3=>3.0,bfpairs6[21:end]...]
+bfpairs7=[:k3=>-1.99995, :k2=>1.06211, :ksnf1=>-5.13512, :ksnf1std1=>4.67567, :nsnf1=>5.01806, :nsnf2=>-1.84446, :Snf1tot=>5.73796, :dmth1=>-2.87079, :nmth1snf3=>0.0698773, :nmth1rgt2=>0.288116, :dmth1snf3=>0.376694, :dmth1rgt2=>3.14651, :smth1=>-4.50517, :kmig1mth1=>-0.379322, :nmig1mth1=>5.25098, :kmig2mth1=>0.560657, :nmig2mth1=>-1.74271, :std1tot=>-0.245076, :istd1=>1.22922, :nstd1=>0.746876, :nstd3=>3.0, :estd1max=>4.85039, :imig1=>5.45447, :kmig1snf1=>-2.80427, :emig1max=>-0.264936, :dmig2=>3.03049, :dmig2snf1=>5.25449, :kmig2snf1=>5.86184, :smig2=>2.28341, :kmig2std1=>5.81895, :nmig2std1=>1.63477, :kmig2mth1std1=>2.87004, :nmig2mth1std1=>2.80064, :dhxt4=>-1.15641, :dhxt4max=>-2.48345, :kdhxt4=>-3.90747, :ndhxt4=>-4.58572, :shxt4=>1.46517, :khxt4mth1=>-4.65211, :nhxt4mth1=>3.03817, :khxt4std1=>0.611965, :nhxt4std1=>1.35178, :khxt4mth1std1=>6.74873, :nhxt4mth1std1=>-0.211267, :khxt4mig1=>-1.23877, :khxt4mig2=>-2.57697, :nhxt4mig1=>1.36639, :nhxt4mig2=>2.07541, :Hxt4_0=>-100.0, :Mig1_0=>-100.0, :Mig2_0=>-100.0, :Mth1_0=>-4.54752, :Std1_0=>5.57239]
+
 pp=trysolveplot.(allprobs,[bfpairs6], [j[1:length(x)] for j in dm2],[k[1:length(x)] for k in me2]); plot(pp[1:18]..., layout=(6, 3), ylim=[0, 10], legend=false)
 
 
@@ -245,6 +249,8 @@ savefig("temp.png")
 #opts7=bbsetup(solveall; Method = :adaptive_de_rand_1_bin_radiuslimited, SearchRange = [subss.((p[2]-5,p[2]+5)) for p in  logpars], NumDimensions = 52, MaxSteps = 10000)
 #res7=bboptimize(opts6, MaxSteps=1000)
 
+opts7=bbsetup(solveall; Method = :xnes, SearchRange = [subss.((p[2]-5,p[2]+5)) for p in  logpars], NumDimensions = 53, MaxSteps = 10000)
+res7=bboptimize(opts7, MaxSteps=1000)
 
 custombounds=
 [(-7.30259,2.69741),
@@ -301,3 +307,12 @@ custombounds=
 (-4.25806,5.74194)]
 
 
+#bestpairs 8 is a result of optimising hxt4moel7snf3driver with 319000 evaluations with the standard deiation with a score of 2.26 starting from bfpairs7 with bounds-10 and +10
+
+bestpairs8= [1.20929, -0.788622, -9.99542, 4.58893, 6.50282, -0.253698, 1.06182, 1.47273, 0.760883, 2.34942, 7.6358, 2.1367, 1.7152, -0.419981, 4.2636, -4.41622, -1.38291, -2.08094, -3.69104, -0.194197, 4.07049, -2.80893, 1.66772, 0.275896, 8.89881, -3.62038, 3.54352, 4.71292, 3.67002, 5.05682, 1.3396, 3.97674, 2.8465, -2.09465, -1.18726, 4.84949, 6.09173, 0.978669, -2.11997, 4.28629, -1.4839, 7.69101, -3.86074, 4.78728, -3.41452, 6.55274, 0.325697, 3.6816, -100.0, -100.0, -100.0, 1.81349, -1.46775]
+
+
+bfpairs8= [bfpairs7[j][1]=> bestpairs8[j] for j in 1:length(bestpairs8)]
+
+
+pp=trysolveplot.(allprobs,[bfpairs8], [j[1:length(x)] for j in dm2],[k[1:length(x)] for k in me2]); plot(pp[1:18]..., layout=(6, 3), ylim=[0, 10], legend=false)
