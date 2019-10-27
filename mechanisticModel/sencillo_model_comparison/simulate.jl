@@ -47,6 +47,31 @@ function newtrysolve(prob, pars, datamean, datastd) #main function to solve a sy
 end
 
 
+function trysolvedata(prob, pars, datamean, datastd, outvar=1) #main function to solve a system with two solvers and return a large value if both fail. 
+
+	try
+		 sol=solve(prob(pars), CVODE_BDF(), saveat = interv,verbose=false,abstol=1e-12,reltol=1e-12)
+		arr=[[j[i] for j in sol.u] for i=1:length(sol.u[outvar])]
+		#push!(finalarrs, arr[1])
+		#plot!(arr[1], xlims=(0,20))
+		#lsqval=sum(((arr[1]-datamean)/datastd).^2)
+		arr[outvar]
+	catch
+			try
+				 sol=solve(prob(pars), CVODE_BDF(), saveat = interv,verbose=false,abstol=1e-12,reltol=1e-12)
+				arr=[[j[i] for j in sol.u] for i=1:length(sol.u[outvar])]
+				arr[outvar]
+			catch
+				arr=[]
+				
+			end
+	arr[outvar]
+	end
+	
+end
+
+
+
 function trysolveplot(prob, pars, datamean, datastd, outvar=1) #main function to solve a system with two solvers and return a large value if both fail. 
 solver=CVODE_BDF
 	try
@@ -63,7 +88,9 @@ solver=CVODE_BDF
 				arr=[[j[i] for j in sol.u] for i=1:length(sol.u[1])]
 				lsqval=sum(((arr[outvar]-datamean)/datastd).^2)
 				p=plot(sol.t, arr[outvar])
+				if outvar==1
 				p=plot!(sol.t, datamean)
+				end
 			catch
 				
 				lsqval=1000000.0
@@ -1054,7 +1081,6 @@ d2 = [-1.60724, -1.11798, -7.70941, 9.91471, 7.07934, -0.0734542, 8.70169, -1.59
 
 marcpars=ppf.colorDict(names, d2)      
 marcpars_sd={'k3': -1.60724, 'k2': -1.11798, 'ksnf1': -7.70941, 'ksnf1std1': 9.91471, 'nsnf1': 7.07934, 'nsnf2': -0.0734542, 'Snf1tot': 8.70169, 'dmth1': -1.59598, 'nmth1snf3': 5.18232, 'nmth1rgt2': 0.551847, 'dmth1snf3': 3.9686, 'dmth1rgt2': 1.6702, 'smth1': -4.23113, 'kmig1mth1': 0.680474, 'nmig1mth1': 4.64808, 'kmig2mth1': 7.48488, 'nmig2mth1': 3.65958, 'std1tot': 4.35926, 'istd1': -3.53894, 'nstd1': 0.412305, 'estd1max': -0.707678, 'imig1': 6.1692, 'kmig1snf1': 3.85898, 'emig1max': 6.94579, 'dmig2': 0.993898, 'dmig2snf1': -4.25699, 'kmig2snf1': -4.12453, 'smig2': 4.08724, 'kmig2std1': 1.81226, 'nmig2std1': 2.52904, 'kmig2mth1std1': -3.75305, 'nmig2mth1std1': -4.81768, 'dhxt4': -2.88543, 'dhxt4max': -1.25432, 'kdhxt4': 4.27927, 'ndhxt4': 4.98911, 'shxt4': 6.1547, 'khxt4mth1': -5.69309, 'nhxt4mth1': 1.51019, 'khxt4std1': -0.620259, 'nhxt4std1': 0.491589, 'khxt4mth1std1': -2.32399, 'nhxt4mth1std1': 2.23031, 'khxt4mig1': -4.30685, 'khxt4mig2': -2.41038, 'nhxt4mig1': 0.63114, 'nhxt4mig2': 0.368315, 'Mig1_0': 7.84135, 'Mig2_0': 9.99994, 'Mth1_0': 8.05267, 'Std1_0': -4.72919, 'mutk2': 0.517147, 'mutk3': -2.11891}
-
 
 
 glucose2=[2.0,

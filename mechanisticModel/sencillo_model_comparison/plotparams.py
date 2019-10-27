@@ -105,7 +105,7 @@ rotatelabels(plt.gca(), 30)
 x+=1  
 plt.subplot(nrows, ncols, x)
 vmax='dmth1rgt2'
-k='k3'
+k='k2'
 n='nmth1rgt2'
 plt.bar([1,2,3], [D[vmax], D[k], D[n]], align='center')
 plt.xticks([1,2,3], [vmax, k, n])
@@ -113,10 +113,10 @@ rotatelabels(plt.gca(), 30)
 x+=1  
 plt.subplot(nrows, ncols, x)
 vmax='std1tot'
-k='estdmax'
+k='estd1max'
 ii='istd1'
 n='nstd1'
-plt.bar([1,2,3], [D[vmax], D[k],D[ii], D[n]], align='center')
+plt.bar([1,2,3,4], [D[vmax], D[k],D[ii], D[n]], align='center')
 plt.xticks([1,2,3,4], [vmax, k, ii, n])
 rotatelabels(plt.gca(), 30)
 x+=1  
@@ -126,8 +126,8 @@ k='ksnf1std1'
 ii='std1tot'
 n='nsnf1'
 n2='nsnf2'
-plt.bar([1,2,3], [D[vmax], D[k],D[ii], D[n],D[n2]], align='center')
-plt.xticks([1,2,3,4], [vmax, k, ii, n, n2])
+plt.bar([1,2,3,4,5], [D[vmax], D[k],D[ii], D[n],D[n2]], align='center')
+plt.xticks([1,2,3,4,5], [vmax, k, ii, n, n2])
 rotatelabels(plt.gca(), 30)
 x+=1 
 plt.subplot(nrows, ncols, x)
@@ -135,10 +135,8 @@ plt.subplot(nrows, ncols, x)
 vmax1='imig1'
 vmax='emig1max'
 k='kmig1snf1'
-n='nsnf1'
-n2='nsnf2'
 plt.bar([1,2,3], [D[vmax1], D[vmax], D[k]], align='center')
-plt.xticks([1,2,3,4], [vmax, k, ii, n, n2])
+plt.xticks([1,2,3], [vmax1, vmax, k])
 rotatelabels(plt.gca(), 30)
 x+=1 
 

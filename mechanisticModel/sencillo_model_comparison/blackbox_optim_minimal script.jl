@@ -1,12 +1,13 @@
 using JLD2
 using JSON
-using Distributions
-using Sundials
-using StatsPlots
-using DataStructures
-using Dierckx
-using BlackBoxOptim
-using DifferentialEquations
+using Distributed
+@everywhere using Distributions
+@everywhere using Sundials
+@everywhere using StatsPlots
+@everywhere using DataStructures
+@everywhere using Dierckx
+@everywhere using BlackBoxOptim
+@everywhere using DifferentialEquations
 
 #script assumes you are at the root of the Mig1Model repository
 cd("/Users/s1259407/Dropbox/PhD/phd_peter_swain/data/plate_reader_data/PythonScripts/Mig1Model/")
@@ -22,7 +23,7 @@ getvalue(pars, key)= [p[2] for p in pars if p[1]==key][1]
 
 
 
-function solveplotnew(prob, pars, datamean, datastd, outvar=1) #main function to solve a system with two solvers and return a large value if both fail. 
+@everywhere function solveplotnew(prob, pars, datamean, datastd, outvar=1) #main function to solve a system with two solvers and return a large value if both fail. 
                        solver=CVODE_BDF
                        sol= solve(prob(pars), solver(), saveat = interv,verbose=false,abstol=1e-12,reltol=1e-12)
                        arr=[[j[i] for j in sol.u] for i=1:length(sol.u[1])]
@@ -38,7 +39,7 @@ function solveplotnew(prob, pars, datamean, datastd, outvar=1) #main function to
 
 
 
-function trysolveplot(prob, pars, datamean, datastd, outvar=1) #main function to solve a system with two solvers and return a large value if both fail. 
+@everywhere function trysolveplot(prob, pars, datamean, datastd, outvar=1) #main function to solve a system with two solvers and return a large value if both fail. 
 solver=CVODE_BDF
 	try
 		sol= solve(prob(pars), solver(), saveat = interv,verbose=false,abstol=1e-12,reltol=1e-12)
@@ -64,7 +65,7 @@ solver=CVODE_BDF
 end
 
 
-function newtrysolve(prob, pars, datamean, datastd) #main function to solve a system with two solvers and return a large value if both fail. 
+@everywhere function newtrysolve(prob, pars, datamean, datastd) #main function to solve a system with two solvers and return a large value if both fail. 
 
 	try
 		 sol=solve(prob(pars), CVODE_BDF(), saveat = interv,verbose=false,abstol=1e-12,reltol=1e-12)
@@ -82,6 +83,33 @@ function newtrysolve(prob, pars, datamean, datastd) #main function to solve a sy
 			end
 	end
 end
+
+
+
+
+function trysolvedata(prob, pars, datamean, datastd, outvar=1) #main function to solve a system with two solvers and return a large value if both fail. 
+
+	try
+		 sol=solve(prob(pars), CVODE_BDF(), saveat = interv,verbose=false,abstol=1e-12,reltol=1e-12)
+		arr=[[j[i] for j in sol.u] for i=1:length(sol.u[outvar])]
+		#push!(finalarrs, arr[1])
+		#plot!(arr[1], xlims=(0,20))
+		#lsqval=sum(((arr[1]-datamean)/datastd).^2)
+		arr[outvar]
+	catch
+			try
+				 sol=solve(prob(pars), CVODE_BDF(), saveat = interv,verbose=false,abstol=1e-12,reltol=1e-12)
+				arr=[[j[i] for j in sol.u] for i=1:length(sol.u[outvar])]
+				arr[outvar]
+			catch
+				arr=[]
+				
+			end
+	arr[outvar]
+	end
+	
+end
+
 
 
 ###SIMULATION VARIABLES
@@ -206,7 +234,9 @@ completepars=
 :Mig1_0=>0.0,
 :Mig2_0=>0.0,
 :Mth1_0=>1.0,
-:Std1_0=>2.1]
+:Std1_0=>2.1, 
+:mutk3=>3,
+:mutk2=>3]
 
 ##solveall function as a function of param vector (requires completepars)
 function solveall(params)  #trying to readapt the parameters to be input as an array
@@ -228,7 +258,63 @@ bestpars6=[-1.99995, 1.06211, -5.13512, 4.67567, 5.01806, -1.84446, 5.73796, -2.
 bfpairs6=[completepars[j][1]=> bestpars6[j] for j in 1:length(completepars)]
 
 bfpairs7=[bfpairs6[1:20]..., :nstd3=>3.0,bfpairs6[21:end]...]
-bfpairs7=[:k3=>-1.99995, :k2=>1.06211, :ksnf1=>-5.13512, :ksnf1std1=>4.67567, :nsnf1=>5.01806, :nsnf2=>-1.84446, :Snf1tot=>5.73796, :dmth1=>-2.87079, :nmth1snf3=>0.0698773, :nmth1rgt2=>0.288116, :dmth1snf3=>0.376694, :dmth1rgt2=>3.14651, :smth1=>-4.50517, :kmig1mth1=>-0.379322, :nmig1mth1=>5.25098, :kmig2mth1=>0.560657, :nmig2mth1=>-1.74271, :std1tot=>-0.245076, :istd1=>1.22922, :nstd1=>0.746876, :nstd3=>3.0, :estd1max=>4.85039, :imig1=>5.45447, :kmig1snf1=>-2.80427, :emig1max=>-0.264936, :dmig2=>3.03049, :dmig2snf1=>5.25449, :kmig2snf1=>5.86184, :smig2=>2.28341, :kmig2std1=>5.81895, :nmig2std1=>1.63477, :kmig2mth1std1=>2.87004, :nmig2mth1std1=>2.80064, :dhxt4=>-1.15641, :dhxt4max=>-2.48345, :kdhxt4=>-3.90747, :ndhxt4=>-4.58572, :shxt4=>1.46517, :khxt4mth1=>-4.65211, :nhxt4mth1=>3.03817, :khxt4std1=>0.611965, :nhxt4std1=>1.35178, :khxt4mth1std1=>6.74873, :nhxt4mth1std1=>-0.211267, :khxt4mig1=>-1.23877, :khxt4mig2=>-2.57697, :nhxt4mig1=>1.36639, :nhxt4mig2=>2.07541, :Hxt4_0=>-100.0, :Mig1_0=>-100.0, :Mig2_0=>-100.0, :Mth1_0=>-4.54752, :Std1_0=>5.57239]
+
+
+bfpairs7=[:k3=>-1.99995,
+:k2=>1.06211,
+:ksnf1=>-5.13512,
+:ksnf1std1=>4.67567,
+:nsnf1=>5.01806,
+:nsnf2=>-1.84446,
+:Snf1tot=>5.73796,
+:dmth1=>-2.87079,
+:nmth1snf3=>0.0698773,
+:nmth1rgt2=>0.288116,
+:dmth1snf3=>0.376694,
+:dmth1rgt2=>3.14651,
+:smth1=>-4.50517,
+:kmig1mth1=>-0.379322,
+:nmig1mth1=>5.25098,
+:kmig2mth1=>0.560657,
+:nmig2mth1=>-1.74271,
+:std1tot=>-0.245076,
+:istd1=>1.22922,
+:nstd1=>0.746876,
+:nstd3=>3.0,
+:estd1max=>4.85039,
+:imig1=>5.45447,
+:kmig1snf1=>-2.80427,
+:emig1max=>-0.264936,
+:dmig2=>3.03049,
+:dmig2snf1=>5.25449,
+:kmig2snf1=>5.86184,
+:smig2=>2.28341,
+:kmig2std1=>5.81895,
+:nmig2std1=>1.63477,
+:kmig2mth1std1=>2.87004,
+:nmig2mth1std1=>2.80064,
+:dhxt4=>-1.15641,
+:dhxt4max=>-2.48345,
+:kdhxt4=>-3.90747,
+:ndhxt4=>-4.58572,
+:shxt4=>1.46517,
+:khxt4mth1=>-4.65211,
+:nhxt4mth1=>3.03817,
+:khxt4std1=>0.611965,
+:nhxt4std1=>1.35178,
+:khxt4mth1std1=>6.74873,
+:nhxt4mth1std1=>-0.211267,
+:khxt4mig1=>-1.23877,
+:khxt4mig2=>-2.57697,
+:nhxt4mig1=>1.36639,
+:nhxt4mig2=>2.07541,
+:Hxt4_0=>-100.0,
+:Mig1_0=>-100.0,
+:Mig2_0=>-100.0,
+:Mth1_0=>-4.54752,
+:Std1_0=>5.57239,
+:mutk3=>3,
+:mutk2=>3 ]
 
 pp=trysolveplot.(allprobs,[bfpairs6], [j[1:length(x)] for j in dm2],[k[1:length(x)] for k in me2]); plot(pp[1:18]..., layout=(6, 3), ylim=[0, 10], legend=false)
 
@@ -249,7 +335,7 @@ savefig("temp.png")
 #opts7=bbsetup(solveall; Method = :adaptive_de_rand_1_bin_radiuslimited, SearchRange = [subss.((p[2]-5,p[2]+5)) for p in  logpars], NumDimensions = 52, MaxSteps = 10000)
 #res7=bboptimize(opts6, MaxSteps=1000)
 
-opts7=bbsetup(solveall; Method = :xnes, SearchRange = [subss.((p[2]-5,p[2]+5)) for p in  logpars], NumDimensions = 53, MaxSteps = 10000)
+opts7=bbsetup(solveall; Method = :xnes, SearchRange = [subss.((p[2]-5,p[2]+5)) for p in  bfpairs7], NumDimensions = 53, MaxSteps = 10000)
 res7=bboptimize(opts7, MaxSteps=1000)
 
 custombounds=
@@ -316,3 +402,36 @@ bfpairs8= [bfpairs7[j][1]=> bestpairs8[j] for j in 1:length(bestpairs8)]
 
 
 pp=trysolveplot.(allprobs,[bfpairs8], [j[1:length(x)] for j in dm2],[k[1:length(x)] for k in me2]); plot(pp[1:18]..., layout=(6, 3), ylim=[0, 10], legend=false)
+
+#best fit 9, run with :xnes on hxt4model7snf3(driver) to fitness of 0.64
+bfpairs9=[:k3=>2.63508, :k2=>2.17225, :ksnf1=>-5.98817, :ksnf1std1=>9.05465, :nsnf1=>4.50887, :nsnf2=>-0.600449, :Snf1tot=>8.95374, :dmth1=>-0.815013, :nmth1snf3=>-0.221673, :nmth1rgt2=>-2.11001, :dmth1snf3=>3.05302, :dmth1rgt2=>-0.624956, :smth1=>-1.79843, :kmig1mth1=>0.743028, :nmig1mth1=>2.14294, :kmig2mth1=>0.535124, :nmig2mth1=>2.17213, :std1tot=>-3.11169, :istd1=>0.794552, :nstd1=>0.611865, :nstd3=>4.94466, :estd1max=>5.16118, :imig1=>6.1056, :kmig1snf1=>-1.66105, :emig1max=>0.105971, :dmig2=>1.26108, :dmig2snf1=>-3.94351, :kmig2snf1=>3.0439, :smig2=>-2.12053, :kmig2std1=>-3.38116, :nmig2std1=>0.45985, :kmig2mth1std1=>-5.18045, :nmig2mth1std1=>3.68821, :dhxt4=>-2.26598, :dhxt4max=>-1.42215, :kdhxt4=>2.2143, :ndhxt4=>-2.29222, :shxt4=>2.47129, :khxt4mth1=>-1.70927, :nhxt4mth1=>6.09682, :khxt4std1=>-3.14254, :nhxt4std1=>3.98171, :khxt4mth1std1=>-5.75592, :nhxt4mth1std1=>-0.601246, :khxt4mig1=>-3.43196, :khxt4mig2=>-4.51407, :nhxt4mig1=>0.412203, :nhxt4mig2=>1.52485, :Hxt4_0=>-104.157, :Mig1_0=>-97.565, :Mig2_0=>-102.962, :Mth1_0=>-1.47144, :Std1_0=>-2.7336, :mutk3=>1.83416, :mutk2=>4.14787]
+
+
+
+
+###plot and save the dynamics
+
+
+pp=solveplotnew.(allprobs,[bfpairs6], [j[1:length(x)] for j in dm2],[k[1:length(x)] for k in me2], 1)
+plot(pp[1:18]..., layout=(6, 3), ylim=[0, 10])
+savefig("5d_hxt4dynamics.pdf")
+
+pp=solveplotnew.(allprobs,[bfpairs6], [j[1:length(x)] for j in dm2],[k[1:length(x)] for k in me2], 2)
+plot(pp[1:18]..., layout=(6, 3), ylim=[0, 2])
+savefig("5d_mig2dynamics.pdf")
+
+pp=solveplotnew.(allprobs,[bfpairs6], [j[1:length(x)] for j in dm2],[k[1:length(x)] for k in me2], 3)
+plot(pp[1:18]..., layout=(6, 3), ylim=[0, 2])
+savefig("5d_mig2dynamics.pdf")
+
+pp=solveplotnew.(allprobs,[bfpairs6], [j[1:length(x)] for j in dm2],[k[1:length(x)] for k in me2], 4)
+plot(pp[1:18]..., layout=(6, 3), ylim=[0, 2])
+savefig("5d_mth1dynamics.pdf")
+
+pp=solveplotnew.(allprobs,[bfpairs6], [j[1:length(x)] for j in dm2],[k[1:length(x)] for k in me2], 5)
+plot(pp[1:18]..., layout=(6, 3), ylim=[0, 2])
+savefig("5d_std1dynamics.pdf")
+
+pp=solveplotnew.(allprobs,[bfpairs6], [j[1:length(x)] for j in dm2],[k[1:length(x)] for k in me2], 6)
+plot(pp[1:18]..., layout=(6, 3), ylim=[0, 2])
+savefig("5d_glucosedynamics.pdf")
