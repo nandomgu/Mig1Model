@@ -4,7 +4,7 @@ using LinearAlgebra
 function init(models, expd, np, rho)
     d = Inf
     count = 1
-    m = sample(1:length(models))
+    m = sample(range(1,stop=length(models)))
     params = rand(models[m])
     d = rho[m](expd, params)
   # end
@@ -119,7 +119,7 @@ function APMC(N, expd, models, rho,;names = Vector[[string("parameter", i) for i
             pts[j,i] = temp[2:(np[j] + 1),temp[1,:] .== j]
             if size(pts[j,i])[2] > 0
                 keep = inds[reshape(temp[1,:] .== j, s)] .<= s
-                wts[j,i] = @distributed vcat for k in 1:length(keep)
+                wts[j,i] = @distributed vcat for k in range(1,stop=length(keep))
                     if !keep[k]
                         pdf(models[j], (pts[j,i][:,k])) / (1 / (sum(wts[j,i - 1])) * dot(values(wts[j,i - 1]), pdf(ker[j], broadcast(-, pts[j,i - 1], pts[j,i][:,k]))))
                     else
@@ -179,15 +179,15 @@ function cont_KDE(models, pts, wts, expd, np, i, ker, rho)
     d = Inf
     count = 1
   #while d==Inf
-    m = sample(1:length(models))
+    m = sample(range(1,stop=length(models)))
     while size(pts[m,i - 1])[2] == 0
-        m = sample(1:length(models))
+        m = sample(range(1,stop=length(models)))
     end
     params = rand(ker[m,i - 1])
     while pdf(models[m], params) == 0
-        m = sample(1:length(models))
+        m = sample(range(1,stop=length(models)))
         while size(pts[m,i - 1])[2] == 0
-            m = sample(1:length(models))
+            m = sample(range(1,stop=length(models)))
         end
         count = count + 1
         params = rand(ker[m,i - 1])
@@ -204,7 +204,7 @@ function APMC_KDE(N, expd, models, rho,;names = Vector[[string("parameter", i) f
     s = round(Int, N * prop)
   #array for number of parameters in each model
     np = Array{Int64}(undef, length(models))
-    for j in 1:lm
+    for j in range(1,stop=lm)
         np[j] = length(models[j])
     end
     template = Array{Any}(undef, lm, 1)
@@ -218,7 +218,7 @@ function APMC_KDE(N, expd, models, rho,;names = Vector[[string("parameter", i) f
     p = zeros(lm, 1)
   #array for KDE estimates
     ker = similar(template)
-    temp = @distributed hcat for j in 1:N
+    temp = @distributed hcat for j in range(1,stop=N)
         init(models, expd, np, rho)
     end
     its = [sum(temp[size(temp)[1],:])]
@@ -226,25 +226,25 @@ function APMC_KDE(N, expd, models, rho,;names = Vector[[string("parameter", i) f
     pacc = ones(lm, 1)
     println(round.([epsilon[i];its[i]], digits = 3))
     temp = temp[:,findall(temp[maximum(np) + 2,:] .<= epsilon[i])]
-    temp = temp[:,1:s]
-    for j in 1:lm
-        pts[j,i] = temp[2:(np[j] + 1),findall(temp[1,:] .== j)]
+    temp = temp[:,range(1,stop=s)]
+    for j in range(1,stop=lm)
+        pts[j,i] = temp[range(2,stop=(np[j] + 1)),findall(temp[1,:] .== j)]
         wts[j,i] = StatsBase.weights(fill(1.0, sum(temp[1,:] .== j)))
     end
     dists = transpose(temp[(maximum(np) + 2),:])
-    for j in 1:lm
+    for j in range(1,stop=lm)
         p[j] = sum(wts[j,1])
     end
-    for j in 1:lm
+    for j in range(1,stop=lm)
         sig[j,i] = cov(pts[j,i], wts[j,i], 2, corrected = false)
     end
     p = p ./ sum(p)
     nbs = Array{Integer}(undef, length(models))
-    for j in 1:lm
+    for j in range(1,stop=lm)
         nbs[j] = length(wts[j,i])
-        println(round.(hcat(mean(diag(sig[j,i])[1:(np[j])]), pacc[j,i], nbs[j], p[j,i]), digits = 3))
+        println(round.(hcat(mean(diag(sig[j,i])[range(1,stop=np[j])]), pacc[j,i], nbs[j], p[j,i]), digits = 3))
     end
-    for j in 1:lm
+    for j in range(1,stop=lm)
         mus = pts[j,i]
         neff = 1 / sum((wts[j,i].values ./ sum(wts[j,i])).^2)
         bs = (4 / (neff * (np[j] + 2)))^(1 / (np[j] + 4))
@@ -266,28 +266,44 @@ function APMC_KDE(N, expd, models, rho,;names = Vector[[string("parameter", i) f
         wts = reshape(wts, length(models), i + 1)
         ker = reshape(ker, length(models), i + 1)
         i = i + 1
-        temp2 = @distributed hcat for j in (1:(N - s))
-            cont_KDE(models, pts, wts, expd, np, i, ker, rho)
+        # temp2 = @sync @distributed hcat for j in range(1,stop=(N-s))
+        #     cont_KDE(models, pts, wts, expd, np, i, ker, rho)
+        # end
+        # out = cont_KDE(models, pts, wts, expd, np, i, ker, rho)
+        # temp2 = zeros(length(out),N-s)
+        # lock = Threads.SpinLock()
+        # @inbounds Threads.@threads for j in range(1,stop=(N-s))
+        #     Threads.lock(lock)
+        #     temp2[:,j] = cont_KDE(models, pts, wts, expd, np, i, ker, rho)
+        #     Threads.unlock(lock)
+        #     println(j)
+        # end
+        out = cont_KDE(models, pts, wts, expd, np, i, ker, rho)
+        temp2 = zeros(length(out),N-s)
+        @inbounds for j in range(1,stop=(N-s))
+            temp2[:,j] = cont_KDE(models, pts, wts, expd, np, i, ker, rho)
         end
+        # temp2=pmap(hcat->cont_KDE(models, pts, wts, expd, np, i, ker, rho),range(1,stop=(N-s)), retry_delays = zeros(3));
+        # temp2 = hcat(temp2...)
         its = vcat(its, sum(temp2[size(temp2)[1],:]))
         temp = hcat(temp, temp2)
-        inds = sortperm(reshape(temp[maximum(np) + 2,:], N))[1:s]
+        inds = sortperm(reshape(temp[maximum(np) + 2,:], N))[range(1,stop=s)]
         temp = temp[:,inds]
         dists = hcat(dists, transpose(temp[(maximum(np) + 2),:]))
         epsilon = vcat(epsilon, temp[(maximum(np) + 2),s])
         pacc = hcat(pacc, zeros(lm))
-        for j in 1:lm
+        for j in range(1,stop=lm)
             if sum(temp2[1,:] .== j) > 0
                 pacc[j,i] = sum(temp[1,inds .> s] .== j) / sum(temp2[1,:] .== j)
             else pacc[j,i] == 0
             end
         end
         println(round.(vcat(epsilon[i], its[i]), digits = 3))
-        for j in 1:lm
-            pts[j,i] = temp[2:(np[j] + 1),findall(temp[1,:] .== j)]
+        for j in range(1,stop=lm)
+            pts[j,i] = temp[range(2,stop=(np[j]+1)),findall(temp[1,:] .== j)]
             if size(pts[j,i])[2] > 0
                 keep = inds[reshape(temp[1,:] .== j, s)] .<= s
-                wts[j,i] = @distributed vcat for k in 1:length(keep)
+                wts[j,i] = @distributed vcat for k in range(1,stop=length(keep))
                     if !keep[k]
                         pdf(models[j], (pts[j,i][:,k])) / pdf(ker[j,i - 1], pts[j,i][:,k])
                     else
@@ -298,7 +314,7 @@ function APMC_KDE(N, expd, models, rho,;names = Vector[[string("parameter", i) f
                     wts[j,i] = fill(wts[j,i], 1)
                 end
                 l = 1
-                for k in 1:length(keep)
+                for k in range(1,stop=length(keep))
                     if keep[k]
                         wts[j,i][k] = wts[j,i - 1][l]
                         l = l + 1
@@ -312,10 +328,10 @@ function APMC_KDE(N, expd, models, rho,;names = Vector[[string("parameter", i) f
             end
         end
         p = hcat(p, zeros(length(models)))
-        for j in 1:lm
+        for j in range(1,stop=lm)
             p[j,i] = sum(wts[j,i])
         end
-        for j in 1:lm
+        for j in range(1,stop=lm)
             if(size(pts[j,i])[2] > np[j])
                 mus = pts[j,i]
                 neff = 1 / sum((wts[j,i].values ./ sum(wts[j,i])).^2)
@@ -329,7 +345,7 @@ function APMC_KDE(N, expd, models, rho,;names = Vector[[string("parameter", i) f
                         ker[j,i] = ker[j,i - 1]
                     else
               #println(j,"OK")
-                        ker[j,i] = MixtureModel(map(u->MvNormal(u, bs^2 * sig[j,i]), [mus[:,k] for k in 1:size(mus)[2]]), wts[j,i].values / sum(wts[j,i]))
+                        ker[j,i] = MixtureModel(map(u->MvNormal(u, bs^2 * sig[j,i]), [mus[:,k] for k in range(1,stop=size(mus)[2])]), wts[j,i].values / sum(wts[j,i]))
                     end
                 else
                     sig[j,i] = sig[j,i - 1]
@@ -341,7 +357,7 @@ function APMC_KDE(N, expd, models, rho,;names = Vector[[string("parameter", i) f
             end
         end
         p[:,i] = p[:,i] ./ sum(p[:,i])
-        for j in 1:lm
+        for j in range(1,stop=lm)
             nbs[j] = length(wts[j,i])
             println(round.(hcat(mean(diag(sig[j,i]) ./ diag(sig[j,1])), pacc[j,i], nbs[j], p[j,i]), digits = 3))
         end

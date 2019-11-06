@@ -1,5 +1,4 @@
 using Distributed #- can parallelise code here by adding extra cores...
-addprocs(20)
 @everywhere begin
     using StatsBase, KernelDensity, Random
     using Distances, Distributions, DataStructures
@@ -14,11 +13,13 @@ addprocs(20)
     tim=tim[1:229]
     datameans=JSON.parsefile("/home/msturrock/Desktop/Mig1/Mig1Model/json/allfitmeans.json", dicttype=Dict)
     dm2=datameans
-    subsd(x)=  if typeof(x)==String return 1000 else return x end # if it is a string(missing value) return a st of 1000  to minimise the relevance of this point.
+    subsd(x)=  if typeof(x)==String return 5 else return x end # if it is a string(missing value) return a st of 1000  to minimise the relevance of this point.
     subzero(x)=  if x==0 return 1 else return x end 
     meanerr=JSON.parsefile("/home/msturrock/Desktop/Mig1/Mig1Model/json/meanerr.json", dicttype=Dict)
     me2=[subzero.(subsd.(j)) for j in meanerr]
-    stdmeans=JSON.parsefile("/home/msturrock/Desktop/Mig1/Mig1Model/json/stdmeans.json", dicttype=Dict)
+
+    stdmeans=JSON.parsefile("json/stdmeans.json", dicttype=Dict)#doesn't need ordering 
+
     sm2=[subzero.(subsd.(j)) for j in stdmeans]
     global interv= 0.044543429844097995; 
     nsteps=convert(Int64, ceil(18.39/interv))
@@ -45,7 +46,7 @@ addprocs(20)
     function trysolve(prob, pars, datamean, datastd) #main function to solve a system with two solvers and return a large value if both fail. 
 
         try
-               sol = solve(prob(pars), CVODE_BDF(), saveat = interv,verbose=false,abstol=1e-12,reltol=1e-12)
+               sol = solve(prob(pars), CVODE_BDF(), saveat = interv,verbose=false,abstol=1e-10,reltol=1e-10,maxiters=1e3)
                arr = [[j[i] for j in sol.u] for i = 1:length(sol.u[1])]
                lsqval = sum(((arr[1] - datamean) / datastd).^2)
         catch
@@ -57,9 +58,8 @@ addprocs(20)
     include("/home/msturrock/Desktop/Mig1/Mig1Model/mechanisticModel/sencillo_model_comparison/functions.jl")
     include("/home/msturrock/Desktop/Mig1/Mig1Model/mechanisticModel/sencillo_model_comparison/abc2.jl")
 
-
     function rho_lens(expd,d2)
-        error = sum(trysolve.(allprobs,[d2], [j(x) for j in splines],me2))
+        error = sum(trysolve.(allprobs,[d2], [j(x) for j in splines],[k[1:length(x)] for k in sm2]))
         if isnan(error) || isinf(error) 
             error = 10000.0
         end
@@ -89,6 +89,7 @@ custombounds=
 (-4.25806,5.74194),
 (-3.61371,6.38629),
 (-3.90139,6.09861),
+(-10.0,3.0),
 (-3.8686,6.1314),
 (-2.80278,7.19722),
 (-3.90139,6.09861),
@@ -116,38 +117,150 @@ custombounds=
 (-5.0,5.0),
 (-4.59453,5.40547),
 (-4.30685,5.69315),
-(-10.0,10.0),
-(-10.0,10.0),
-(-10.0,10.0),
-(-10.0,10.0)]
+(-2.0,2.0), #mth10
+(-2.0,2.0), #std10
+(-5.0,5.0)] #mutk3]#mutk2
+
+bounds=[
+:k3=>(1.0e-3, 1.0e3), 
+:k2=> (1.0e-3, 1.0e3),
+:ksnf1=>(1.0e-3, 1.0e3),
+:ksnf1std1=> (1.0e-3, 1.0e3),
+:nsnf1=>(1.0, 10.0), 
+:nsnf2=>(1.0, 10.0), 
+:Snf1tot=> (0.1, 1.0e2), #10 times less than mig1 or 100 times more.
+:dmth1=>  (0.1, 2.5e3), 
+:nmth1snf3=> (1.0, 10.0), 
+:nmth1rgt2=> (1.0, 10.0), 
+:dmth1snf3=> (0.1, 2.5e3), 
+:dmth1rgt2=>  (0.1, 2.5e3), 
+:smth1=> (1.0e-3, 120), 
+:kmig1mth1=>  (1.0e-3, 1.0e3), 
+:nmig1mth1=> (1.0, 10.0), 
+:kmig2mth1=>  (1.0e-3, 1.0e3), 
+:nmig2mth1=> (1.0, 10.0), 
+:std1tot=> (0.1, 1.0e3), 
+:istd1=> (0.1, 2.5e4), 
+:nstd1=> (1.0, 10.0), 
+:nstd3=> (1.0, 10.0), 
+:estd1max=>(0.1, 2.5e4), 
+:mig1tot=> (.9999999999,1), 
+:imig1=> (0.1, 2.5e4) , 
+:kmig1snf1=>  (1.0e-3, 1.0e3), 
+:emig1max=>(0.1, 2.5e4), 
+:dmig2=>  (0.1, 2.5e3), 
+:dmig2snf1=>  (0.1, 2.5e3), 
+:kmig2snf1=>   (1.0e-3, 1.0e3), 
+:smig2=>(1.0e-3, 120), 
+:kmig2std1=>  (1.0e-3, 1.0e3), 
+:nmig2std1=>(1.0, 10.0), 
+:kmig2mth1std1=>  (1.0e-3, 1.0e3), 
+:nmig2mth1std1=> (1.0, 10.0), 
+:dhxt4=>  (0.1, 2.5e3), 
+:dhxt4max=> (0.1, 2.5e3), 
+:kdhxt4=>  (1.0e-3, 1.0e3), 
+:ndhxt4=> (1.0, 10.0), 
+:shxt4=> (1.0e-3, 120), 
+:khxt4mth1=> (1.0e-3, 1.0e3), 
+:nhxt4mth1=> (1.0, 10.0), 
+:khxt4std1=>  (1.0e-3, 1.0e3), 
+:nhxt4std1=>(1.0, 10.0), 
+:khxt4mth1std1=>  (1.0e-3, 1.0e3),
+:nhxt4mth1std1=> (1.0, 10.0), #Not exactly sure about what bounds to use for initial conditions.  doing form 0 to 10 in mig1 units.
+:mutk2=>(1.0e-3, 1.0e3),
+:mutk3=>(1.0e-3, 1.0e3),
+:khxt4mig1=>(1.0e-3, 1.0e3),
+:khxt4mig2=>(1.0e-3, 1.0e3),
+:nhxt4mig1=> (1.0, 10.0),
+:nhxt4mig2=> (1.0, 10.0),
+:Hxt4_0=> (0.0, 1.0e1), 
+:Mig1_0=> (0.0, 1.0e1),  
+:Mig2_0=> (0.0, 1.0e1), 
+:Mth1_0=> (0.0, 1.0e1),  
+:Std1_0=> (0.0, 1.0e1), 
+]
 
 model_lens = [Uniform(p[1],p[2]) for p in custombounds]
+priors = [2.64424, 1.23356, -7.98945, 3.10794, 3.04429, -1.00647, 5.73373, 0.771657, -3.8536, 0.777529, 0.250743, 5.10096, -4.1397, -0.422502, 4.40694, 3.21153, 1.88122, -0.100531, 0.729806, 0.850592, 1.47274, 4.87223, 7.13754, 1.825, 5.53788, 0.474569, -1.59972, 0.14398, 1.04363, -1.83138, -0.0639927, -5.4498, 4.2669, -2.40372, -1.30821, 4.40911, -2.51329, 2.23823, -5.06447, 6.09821, -0.122023, 4.12318, -6.20391, -1.83399, -1.73008, -3.10607, 1.23147, 0.424585, 1.89543, 0.122836, 1.45363]
+
+model_lens = [Uniform(p-0.5,p+0.5) for p in priors]
 
 
-np = 2000 # change the number of particles
+np = 5000 # change the number of particles
 @time apmc_output =APMC_KDE(np,0.0,[model_lens],[rho_lens],paccmin=0.01)
 
 #plot best parameter set
 d2 = apmc_output.pts[end][1:51,1]
-d3 = apmc_output.pts[end][1:53,:]
+d3 = apmc_output.pts[end][1:51,:]
 d2 = [-1.99995, 1.06211, -5.13512, 4.67567, 5.01806, -1.84446, 5.73796, -2.87079, 0.0698773, 0.288116, 0.376694, 3.14651, -4.50517, -0.379322, 5.25098, 0.560657, -1.74271, -0.245076, 1.22922, 0.746876, 4.85039, 5.45447, -2.80427, -0.264936, 3.03049, 5.25449, 5.86184, 2.28341, 5.81895, 1.63477, 2.87004, 2.80064, -1.15641, -2.48345, -3.90747, -4.58572, 1.46517, -4.65211, 3.03817, 0.611965, 1.35178, 6.74873, -0.211267, -1.23877, -2.57697, 1.36639, 2.07541, -100.0, -100.0, -4.54752, 5.57239]
-d2 = zeros(48)
-for i in 1:48
+d2 = zeros(51)
+for i in 1:51
     d2[i] = mode(apmc_output.pts[end][i,1])
 end
+
+sens = inv(StatsBase.cov(transpose(exp.(d3[1:51,1:1000]))))
+test=log.(diag(sens))
+
+labels =             
+["k3"
+"k2"
+"ksnf1"
+"ksnf1std1"
+"nsnf1"
+"nsnf2"
+"Snf1tot"
+"dmth1"
+"nmth1snf3"
+"nmth1rgt2"
+"dmth1snf3"
+"dmth1rgt2"
+"smth1"
+"kmig1mth1"
+"nmig1mth1"
+"kmig2mth1"
+"nmig2mth1"
+"std1tot"
+"istd1"
+"nstd1"
+"nstd3"
+"estd1max"
+"imig1"
+"kmig1snf1"
+"emig1max"
+"dmig2"
+"dmig2snf1"
+"kmig2snf1"
+"smig2"
+"kmig2std1"
+"nmig2std1"
+"kmig2mth1std1"
+"nmig2mth1std1"
+"dhxt4"
+"dhxt4max"
+"kdhxt4"
+"ndhxt4"
+"shxt4"
+"khxt4mth1"
+"nhxt4mth1"
+"khxt4std1"
+"nhxt4std1"
+"khxt4mth1std1"
+"nhxt4mth1std1"
+"khxt4mig1"
+"khxt4mig2"
+"nhxt4mig1"
+"nhxt4mig2"
+"mth10"
+"Std10"
+"c"]
 
 using Plots
 d2 = rand(pardistributions)
 
 
-
 gr(ylabel="frequency",label="",xlabel="parameter value")
-anim = @animate for i = 1:48
-    if i < 45
-        histogram(d3[i,:],title=string(bounds[i][1]),xlims=(log(bounds[i][2][1]),log(bounds[i][2][2])))
-    else
-        histogram(d3[i,:],title=string(bounds2[i-44][1]),xlims=(bounds2[i-44][2][1],bounds2[i-44][2][2]))
-    end
+anim = @animate for i = 1:51
+    histogram(d3[i,:],title="$(labels[i]), sensitivity rank = $(test[i])",xlims=(model_lens[i].a,model_lens[i].b))
 end
 gif(anim,"posteriors.gif",fps=1)
 
@@ -167,54 +280,53 @@ findall(out.<10000)
 
 d2 = rand(pardistributions)
 using Plots
-inspectdr(grid=false,linewidth=3.0,ylabel="HXT4")
+gr(grid=false,linewidth=3.0,ylabel="HXT4",label=["model" "data"])
 p=[]
 for i = 1:18
     @show i
-    sol = solve(allprobs[i](d2), CVODE_BDF(), saveat = interv,verbose=true,abstol=1e-15,reltol=1e-15)
-    push!(p,plot([sol[1,:] splines[i](x)],label=["model" "data"],xlabel="time",title="condition $i"))
+    sol = solve(allprobs[i](d2), CVODE_BDF(), saveat = interv,verbose=true,abstol=1e-12,reltol=1e-12)
+    push!(p,plot([sol[1,:] splines[i](x)],ribbon=[zeros(length(x)) [k for k in sm2[i][1:length(x)]]],fillalpha=.5,label="",xlabel="time",title="condition $i"))
 end
 plot(p[1:18]...,layout=(6,3),size=(1000,1000))
-savefig("sampleoutput_with_g.png")
+savefig("sampleoutput_std.png")
 
 
 function glucose2(t,a,b,c,n)
     return a.*exp.((-(t.-b).^n)./n*c.^n)
 end
 
-
-inspectdr(grid=false,linewidth=3.0,ylabel="mig1")
+gr(grid=false,linewidth=3.0,ylabel="mig1",yscale=:linear)
 p=[]
 for i = 1:18
      sol = solve(allprobs[i](d2), CVODE_BDF(), saveat = interv,verbose=true,abstol=1e-12,reltol=1e-12)
-     push!(p,plot([sol[2,:]],label="model",xlabel="time",title="condition $i"))
+     push!(p,plot([sol[2,:]],label="",xlabel="time",title="condition $i"))
 end
 plot(p[1:18]...,layout=(6,3),size=(1000,1000))
 savefig("sampleoutputmig1.png")
 
-inspectdr(grid=false,linewidth=3.0,ylabel="mig2")
+gr(grid=false,linewidth=3.0,ylabel="mig2",yscale=:linear)
 p=[]
 for i = 1:18
      sol = solve(allprobs[i](d2), CVODE_BDF(), saveat = interv,verbose=true,abstol=1e-15,reltol=1e-15)
-     push!(p,plot([sol[3,:]],label="model",xlabel="time",title="condition $i"))
+     push!(p,plot([sol[3,:]],label="",xlabel="time",title="condition $i"))
 end
 plot(p[1:18]...,layout=(6,3),size=(1000,1000))
 savefig("sampleoutputmig2.png")
 
-inspectdr(grid=false,linewidth=3.0,ylabel="mth1")
+gr(grid=false,linewidth=3.0,ylabel="mth1",yscale=:linear)
 p=[]
 for i = 1:18
      sol = solve(allprobs[i](d2), CVODE_BDF(), saveat = interv,verbose=true,abstol=1e-15,reltol=1e-15)
-     push!(p,plot([sol[4,:]],label="model",xlabel="time",title="condition $i"))
+     push!(p,plot([sol[4,:]],label="",xlabel="time",title="condition $i"))
 end
 plot(p[1:18]...,layout=(6,3),size=(1000,1000))
 savefig("sampleoutputmth1.png")
 
-inspectdr(grid=false,linewidth=3.0,ylabel="Std1")
+gr(grid=false,linewidth=3.0,ylabel="Std1",yscale=:linear)
 p=[]
 for i = 1:18
      sol = solve(allprobs[i](d2), CVODE_BDF(), saveat = interv,verbose=true,abstol=1e-15,reltol=1e-15)
-     push!(p,plot([sol[5,:]],label="model",xlabel="time",title="condition $i"))
+     push!(p,plot([sol[5,:]],label="",xlabel="time",title="condition $i"))
 end
 plot(p[1:18]...,layout=(6,3),size=(1000,1000))
 savefig("sampleoutputStd1.png")
@@ -227,13 +339,77 @@ end
 gif(anim,"posteriors.gif",fps=1)
 
 
-using BlackBoxOptim
-function solveall(d2)
-    error = sum(trysolve.(allprobs,[d2], [j(x) for j in splines],me2))
+@everywhere using BlackBoxOptim
+@everywhere function solveall(d2)
+    error = sum(trysolve.(allprobs,[d2], [j(x) for j in splines],[k[1:length(x)] for k in sm2]))
     if isnan(error) || isinf(error) 
         error = 10000.0
     end
     return error
 end
-opts7=bbsetup(solveall; Method = :adaptive_de_rand_1_bin_radiuslimited, SearchRange = custombounds, NumDimensions = 51, MaxSteps = 100000)
-res7=bboptimize(opts7, MaxSteps=100000)
+opts7=bbsetup(solveall; Method=:xnes, SearchRange = custombounds, NumDimensions = 51, MaxSteps = 20000,Workers = workers())
+res7=bboptimize(opts7, MaxSteps=40000)
+
+d2 = [-0.955097, -0.402872, -7.99571, 3.66697, 4.19597, 0.300486, 7.3091, -5.58976, -4.1055, 0.646965, 1.0733, 2.53052, -0.00222343, -0.0899301, 5.26236, 7.48491, -4.73763, 0.444363, 0.607859, 0.90996, -8.51219, 1.69052, 2.11599, 1.46336, 3.85118, 1.52119, -0.455843, 3.68919, 0.428872, -0.718575, 0.826405, -5.70954, -1.14255, -1.34946, -2.30892, -1.54427, 2.18582, 2.23409, -1.00402, 2.56725, 0.395004, 3.31004, 2.27537, -4.81768, -4.02057, -3.58627, -0.0918299, 0.93555, 1.54937, 0.753939, 3.30952]
+
+d2 = [2.64424, 1.23356, -7.98945, 3.10794, 3.04429, -1.00647, 5.73373, 0.771657, -3.8536, 0.777529, 0.250743, 5.10096, -4.1397, -0.422502, 4.40694, 3.21153, 1.88122, -0.100531, 0.729806, 0.850592, 1.47274, 4.87223, 7.13754, 1.825, 5.53788, 0.474569, -1.59972, 0.14398, 1.04363, -1.83138, -0.0639927, -5.4498, 4.2669, -2.40372, -1.30821, 4.40911, -2.51329, 2.23823, -5.06447, 6.09821, -0.122023, 4.12318, -6.20391, -1.83399, -1.73008, -3.10607, 1.23147, 0.424585, 1.89543, 0.122836, 1.45363]
+
+
+using DiffEqSensitivity
+m = gsa(allprobs[1](d2), CVODE_BDF(),tim,[[exp(genotypes[1](d2)[i]-0.1),exp(genotypes[1](d2)[i]+0.1)] for i = 1:51],Morris(p_steps=10 .* ones(51),len_trajectory=1500,total_num_trajectory=1000,num_trajectory=150),1e-15,1e-15)
+
+using Plots
+i=51
+Plots.plot(m.means[i][1,:], ribbon=sqrt.(m.variances[i])[1,:],title="$(labels[i])",label="",xlabel="time",ylabel="HXT4")
+
+gr(ylabel="change in HXT4",label="",xlabel="time")
+anim = @animate for i = 1:51
+    Plots.plot(m.means[i][1,:], ribbon=sqrt.(m.variances[i])[1,:],title="$(labels[i])")
+end
+gif(anim,"sens_morris_HXT4.gif",fps=1)
+
+gr(ylabel="change in Mig1",label="",xlabel="time")
+anim = @animate for i = 1:51
+    Plots.plot(m.means[i][2,:], ribbon=sqrt.(m.variances[i])[2,:],title="$(labels[i])")
+end
+gif(anim,"sens_morris_mig1.gif",fps=1)
+
+gr(ylabel="change in Mig2",label="",xlabel="time")
+anim = @animate for i = 1:51
+    Plots.plot(m.means[i][3,:], ribbon=sqrt.(m.variances[i])[3,:],title="$(labels[i])")
+end
+gif(anim,"sens_morris_mig2.gif",fps=1)
+
+gr(ylabel="change in Mth1",label="",xlabel="time")
+anim = @animate for i = 1:51
+    Plots.plot(m.means[i][4,:], ribbon=sqrt.(m.variances[i])[4,:],title="$(labels[i])")
+end
+gif(anim,"sens_morris_mth1.gif",fps=1)
+
+gr(ylabel="change in Std1",label="",xlabel="time")
+anim = @animate for i = 1:51
+    Plots.plot(m.means[i][5,:], ribbon=sqrt.(m.variances[i])[5,:],title="$(labels[i])")
+end
+gif(anim,"sens_morris_std1.gif",fps=1)
+
+using Plots
+for kk = 4:18
+    m = gsa(allprobs[kk](d2), CVODE_BDF(),tim,[[exp(genotypes[kk](d2)[ii]-0.1),max(exp(genotypes[kk](d2)[ii]+0.1),1e-20)] for ii = 1:48],Morris(p_steps=10 .* ones(51),len_trajectory=1500,total_num_trajectory=1000,num_trajectory=150),1e-15,1e-15)
+    gr(ylabel="variance in change",label="",xlabel="mean change",title="condition = $kk")
+    mean_hxt = zeros(48)
+    var_hxt = zeros(48)
+    for i = 1:48
+        mean_hxt[i] = sum(m.means[i][1,:])
+        var_hxt[i] = sum(m.variances[i][1,:])
+    end
+    scatter(log.(mean_hxt),log.(var_hxt), series_annotations = text.(labels[1:48], :bottom,6))
+    savefig("mean_vs_variance_condition_$kk.pdf")
+end
+
+
+N = 10
+sobol = gsa(allprobs[1](d2), CVODE_BDF(),tim,[[exp(genotypes[1](d2)[i]-0.1),exp(genotypes[1](d2)[i]+0.1)] for i = 1:48],Sobol(N=N,order=[2]),1e-15,1e-15)
+
+gr(ylabel="sensitivity",label="",xlabel="mode",title="")
+scatter(exp.(d2),test, series_annotations = text.(labels[1:51], :bottom,6))
+savefig("mode_vs_sensitivity_non_log2.pdf")
